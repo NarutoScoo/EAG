@@ -353,9 +353,116 @@
       return currentModal;
     }
 
-    // Create new modal if none exists
-    // ... rest of the existing showSummary function code ...
-    // Return the modal at the end
+    // Create backdrop with blur effect
+    const backdrop = document.createElement('div');
+    backdrop.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `;
+
+    // Create modal with dark mode support
+    const modal = document.createElement('div');
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    modal.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      max-height: 80vh;
+      background: ${isDarkMode ? '#1a1a1a' : 'white'};
+      padding: 0;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      z-index: 10001;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      color: ${isDarkMode ? '#e0e0e0' : '#2c3e50'};
+    `;
+
+    const pageTitle = document.title || 'Current Page';
+    
+    // Header with sticky positioning
+    const header = document.createElement('div');
+    header.style.cssText = `
+      position: sticky;
+      top: 0;
+      background: ${isDarkMode ? '#2d2d2d' : 'white'};
+      border-bottom: 1px solid ${isDarkMode ? '#404040' : '#eee'};
+      padding: 20px 30px;
+      border-radius: 12px 12px 0 0;
+      z-index: 1;
+    `;
+    header.innerHTML = `
+      <h2 style="color: ${isDarkMode ? '#e0e0e0' : '#2c3e50'}; margin: 0; padding-right: 20px;">${pageTitle}</h2>
+    `;
+
+    // Close button inside header
+    const closeButton = document.createElement('button');
+    closeButton.textContent = '×';
+    closeButton.style.cssText = `
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      border: none;
+      background: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: ${isDarkMode ? '#a0a0a0' : '#666'};
+      padding: 0;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+    `;
+    closeButton.onmouseover = () => {
+      closeButton.style.backgroundColor = isDarkMode ? '#404040' : '#f0f0f0';
+    };
+    closeButton.onmouseout = () => {
+      closeButton.style.backgroundColor = 'transparent';
+    };
+    closeButton.onclick = () => backdrop.remove();
+    header.appendChild(closeButton);
+
+    // Content with scrolling
+    const contentWrapper = document.createElement('div');
+    contentWrapper.style.cssText = `
+      padding: 20px 30px;
+      overflow-y: auto;
+      flex-grow: 1;
+      background: ${isDarkMode ? '#1a1a1a' : 'white'};
+    `;
+
+    modal.appendChild(header);
+    modal.appendChild(contentWrapper);
+    backdrop.appendChild(modal);
+    document.body.appendChild(backdrop);
+
+    // Update content
+    updateSummaryContent(modal, summary);
+
+    // Click outside to dismiss
+    backdrop.onclick = (e) => {
+      if (e.target === backdrop) {
+        backdrop.remove();
+      }
+    };
+
     return modal;
   }
 
@@ -475,8 +582,16 @@
 
   // Main execution
   (async () => {
-    const content = await getPageContent();
-    const summary = await summarizeText(content);
-    showSummary(summary);
+    try {
+      const content = await getPageContent();
+      if (content) {
+        const summary = await summarizeText(content);
+        if (summary) {
+          await showSummary(summary);
+        }
+      }
+    } catch (error) {
+      console.error('Error in main execution:', error);
+    }
   })();
 })(); 
