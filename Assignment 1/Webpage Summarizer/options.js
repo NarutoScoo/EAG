@@ -94,7 +94,9 @@ function showStatus(message, isError = false) {
 }
 
 // Add event listeners
-document.addEventListener('DOMContentLoaded', loadSettings);
-document.querySelector('form').addEventListener('submit', saveSettings);
-document.getElementById('model-type').addEventListener('change', updateVisibility);
-document.getElementById('reset-button').addEventListener('click', resetSettings); 
+document.addEventListener('DOMContentLoaded', () => {
+  loadSettings();
+  document.querySelector('form').addEventListener('submit', saveSettings);
+  document.getElementById('model-type').addEventListener('change', updateVisibility);
+  document.getElementById('reset-button').addEventListener('click', resetSettings);
+}); 
