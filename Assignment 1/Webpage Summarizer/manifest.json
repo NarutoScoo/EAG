@@ -12,7 +12,9 @@
   "permissions": [
     "activeTab",
     "contextMenus",
-    "storage"
+    "storage",
+    "<all_urls>",
+    "webRequest"
   ],
   "background": {
     "scripts": ["background.js"]

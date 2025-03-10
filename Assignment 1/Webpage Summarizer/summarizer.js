@@ -77,8 +77,10 @@
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${settings.apiKey}`
+              'Authorization': `Bearer ${settings.apiKey}`,
+              'Accept': 'application/json'
             },
+            mode: 'cors',
             body: JSON.stringify({
               model: settings.openaiModel,
               messages: [{
@@ -89,10 +91,15 @@
                 content: `Please summarize the following text:\n\n${text}`
               }]
             })
+          }).catch(error => {
+            console.error('Fetch error:', error);
+            throw new Error(`Network request failed: ${error.message}`);
           });
 
           if (!response.ok) {
-            throw new Error('Failed to get summary from OpenAI API');
+            const errorData = await response.text().catch(() => 'No error details available');
+            console.error('API Error:', errorData);
+            throw new Error(`OpenAI API error (${response.status}): ${errorData}`);
           }
 
           const data = await response.json();
@@ -101,17 +108,24 @@
           const response = await fetch(`${settings.apiUrl}/api/generate`, {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
             },
+            mode: 'cors',
             body: JSON.stringify({
               model: settings.ollamaModel,
               prompt: `Please provide a summary of the following text, including key points and important details:\n\n${text}`,
               stream: false
             })
+          }).catch(error => {
+            console.error('Fetch error:', error);
+            throw new Error(`Network request failed: ${error.message}`);
           });
 
           if (!response.ok) {
-            throw new Error('Failed to get summary from Ollama API');
+            const errorData = await response.text().catch(() => 'No error details available');
+            console.error('API Error:', errorData);
+            throw new Error(`Ollama API error (${response.status}): ${errorData}`);
           }
 
           const data = await response.json();
