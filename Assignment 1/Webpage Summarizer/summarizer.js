@@ -73,63 +73,63 @@
             throw new Error('OpenAI API key is required. Please configure it in the extension settings.');
           }
           
-          const response = await fetch(`${settings.apiUrl}/chat/completions`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${settings.apiKey}`,
-              'Accept': 'application/json'
-            },
-            mode: 'cors',
-            body: JSON.stringify({
-              model: settings.openaiModel,
-              messages: [{
-                role: 'system',
-                content: 'You are a helpful assistant that creates concise summaries. Extract key points and important details.'
-              }, {
-                role: 'user',
-                content: `Please summarize the following text:\n\n${text}`
-              }]
-            })
-          }).catch(error => {
-            console.error('Fetch error:', error);
-            throw new Error(`Network request failed: ${error.message}`);
-          });
+          try {
+            const response = await fetch(`${settings.apiUrl}/chat/completions`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${settings.apiKey}`
+              },
+              body: JSON.stringify({
+                model: settings.openaiModel,
+                messages: [{
+                  role: 'system',
+                  content: 'You are a helpful assistant that creates concise summaries. Extract key points and important details.'
+                }, {
+                  role: 'user',
+                  content: `Please summarize the following text:\n\n${text}`
+                }]
+              })
+            });
 
-          if (!response.ok) {
-            const errorData = await response.text().catch(() => 'No error details available');
-            console.error('API Error:', errorData);
-            throw new Error(`OpenAI API error (${response.status}): ${errorData}`);
+            if (!response.ok) {
+              const errorText = await response.text();
+              console.error('OpenAI API Error:', errorText);
+              throw new Error(`OpenAI API error (${response.status}): ${errorText}`);
+            }
+
+            const data = await response.json();
+            aiSummary = data.choices[0].message.content;
+          } catch (fetchError) {
+            console.error('OpenAI Fetch Error:', fetchError);
+            throw new Error(`Failed to connect to OpenAI API: ${fetchError.message}`);
           }
-
-          const data = await response.json();
-          aiSummary = data.choices[0].message.content;
         } else {
-          const response = await fetch(`${settings.apiUrl}/api/generate`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
-            mode: 'cors',
-            body: JSON.stringify({
-              model: settings.ollamaModel,
-              prompt: `Please provide a summary of the following text, including key points and important details:\n\n${text}`,
-              stream: false
-            })
-          }).catch(error => {
-            console.error('Fetch error:', error);
-            throw new Error(`Network request failed: ${error.message}`);
-          });
+          try {
+            const response = await fetch(`${settings.apiUrl}/api/generate`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                model: settings.ollamaModel,
+                prompt: `Please provide a summary of the following text, including key points and important details:\n\n${text}`,
+                stream: false
+              })
+            });
 
-          if (!response.ok) {
-            const errorData = await response.text().catch(() => 'No error details available');
-            console.error('API Error:', errorData);
-            throw new Error(`Ollama API error (${response.status}): ${errorData}`);
+            if (!response.ok) {
+              const errorText = await response.text();
+              console.error('Ollama API Error:', errorText);
+              throw new Error(`Ollama API error (${response.status}): ${errorText}`);
+            }
+
+            const data = await response.json();
+            aiSummary = data.response;
+          } catch (fetchError) {
+            console.error('Ollama Fetch Error:', fetchError);
+            throw new Error(`Failed to connect to Ollama API: ${fetchError.message}`);
           }
-
-          const data = await response.json();
-          aiSummary = data.response;
         }
 
         // Process the AI summary

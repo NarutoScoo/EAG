@@ -13,8 +13,8 @@
     "activeTab",
     "contextMenus",
     "storage",
-    "<all_urls>",
-    "webRequest"
+    "https://api.openai.com/*",
+    "http://localhost:11434/*"
   ],
   "background": {
     "scripts": ["background.js"]
