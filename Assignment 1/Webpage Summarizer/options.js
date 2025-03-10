@@ -12,7 +12,21 @@ async function loadSettings() {
   const settings = await browser.storage.sync.get(defaultSettings);
   document.getElementById('model-type').value = settings.modelType;
   document.getElementById('openai-model').value = settings.openaiModel;
-  document.getElementById('ollama-model').value = settings.ollamaModel;
+  
+  // Handle Ollama model setting
+  const ollamaModel = settings.ollamaModel;
+  const ollamaPresetSelect = document.getElementById('ollama-model-preset');
+  const ollamaCustomInput = document.getElementById('ollama-model');
+  
+  if (['llama2', 'mistral', 'codellama', 'vicuna'].includes(ollamaModel)) {
+    ollamaPresetSelect.value = ollamaModel;
+    ollamaCustomInput.style.display = 'none';
+  } else {
+    ollamaPresetSelect.value = 'custom';
+    ollamaCustomInput.value = ollamaModel;
+    ollamaCustomInput.style.display = 'block';
+  }
+  
   document.getElementById('api-url').value = settings.apiUrl;
   document.getElementById('api-key').value = settings.apiKey;
   updateVisibility();
@@ -23,13 +37,22 @@ async function saveSettings(e) {
   e.preventDefault();
   const modelType = document.getElementById('model-type').value;
   const openaiModel = document.getElementById('openai-model').value;
-  const ollamaModel = document.getElementById('ollama-model').value;
+  const ollamaPreset = document.getElementById('ollama-model-preset').value;
+  const ollamaCustom = document.getElementById('ollama-model').value;
   const apiUrl = document.getElementById('api-url').value;
   const apiKey = document.getElementById('api-key').value;
+
+  // Determine Ollama model value
+  const ollamaModel = ollamaPreset === 'custom' ? ollamaCustom : ollamaPreset;
 
   // Validate required fields
   if (modelType === 'openai' && !apiKey) {
     showStatus('API Key is required for OpenAI', true);
+    return;
+  }
+
+  if (modelType === 'ollama' && ollamaPreset === 'custom' && !ollamaCustom) {
+    showStatus('Custom model name is required', true);
     return;
   }
 
@@ -81,6 +104,13 @@ function updateVisibility() {
   }
 }
 
+// Handle Ollama model preset changes
+function handleOllamaPresetChange() {
+  const preset = document.getElementById('ollama-model-preset').value;
+  const customInput = document.getElementById('ollama-model');
+  customInput.style.display = preset === 'custom' ? 'block' : 'none';
+}
+
 // Show status message
 function showStatus(message, isError = false) {
   const status = document.getElementById('status');
@@ -99,4 +129,5 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelector('form').addEventListener('submit', saveSettings);
   document.getElementById('model-type').addEventListener('change', updateVisibility);
   document.getElementById('reset-button').addEventListener('click', resetSettings);
+  document.getElementById('ollama-model-preset').addEventListener('change', handleOllamaPresetChange);
 }); 

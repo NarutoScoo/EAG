@@ -3,12 +3,41 @@
 <head>
   <meta charset="utf-8">
   <style>
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8f9fa;
+      --text-primary: #2c3e50;
+      --text-secondary: #666666;
+      --border-color: #ddd;
+      --input-bg: #ffffff;
+      --divider-color: #eee;
+      --primary-button: #3498db;
+      --danger-button: #e74c3c;
+      --success-bg: #d4edda;
+      --success-text: #155724;
+      --error-bg: #f8d7da;
+      --error-text: #721c24;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #1a1a1a;
+        --bg-secondary: #2d2d2d;
+        --text-primary: #e0e0e0;
+        --text-secondary: #a0a0a0;
+        --border-color: #404040;
+        --input-bg: #2d2d2d;
+        --divider-color: #404040;
+      }
+    }
+
     body {
       padding: 20px;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       max-width: 800px;
       margin: 0 auto;
-      color: #2c3e50;
+      color: var(--text-primary);
+      background: var(--bg-primary);
     }
 
     .container {
@@ -33,22 +62,21 @@
       display: block;
       margin-bottom: 8px;
       font-weight: 500;
-      color: #2c3e50;
     }
 
     select, input[type="text"], input[type="password"] {
       width: 100%;
       padding: 8px 12px;
-      border: 1px solid #dce4ec;
+      border: 1px solid var(--border-color);
       border-radius: 4px;
       font-size: 14px;
-      color: #2c3e50;
-      transition: border-color 0.2s;
+      color: var(--text-primary);
+      background: var(--input-bg);
     }
 
     select:focus, input[type="text"]:focus, input[type="password"]:focus {
       outline: none;
-      border-color: #3498db;
+      border-color: var(--primary-button);
     }
 
     .button-group {
@@ -69,12 +97,12 @@
     }
 
     button[type="submit"] {
-      background: #3498db;
+      background: var(--primary-button);
       color: white;
     }
 
     button[type="button"] {
-      background: #e74c3c;
+      background: var(--danger-button);
       color: white;
     }
 
@@ -103,33 +131,20 @@
       color: #34495e;
     }
 
-    @media (prefers-color-scheme: dark) {
-      body {
-        background: #1a1a1a;
-        color: #e0e0e0;
-      }
+    .help-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
 
-      .container {
-        background: #2d2d2d;
-      }
+    .model-input-group {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
 
-      h1, h2 {
-        color: #e0e0e0;
-      }
-
-      select, input[type="text"], input[type="password"] {
-        background: #1a1a1a;
-        border-color: #404040;
-        color: #e0e0e0;
-      }
-
-      select:focus, input[type="text"]:focus, input[type="password"]:focus {
-        border-color: #3498db;
-      }
-
-      .section {
-        background: #1a1a1a;
-      }
+    .model-input-group select, .model-input-group input {
+      flex: 1;
     }
   </style>
 </head>
@@ -161,12 +176,21 @@
         <div id="ollama-section" style="display: none;">
           <div class="form-group">
             <label for="ollama-model">Ollama Model</label>
-            <select id="ollama-model" name="ollama-model">
-              <option value="llama2">Llama 2</option>
-              <option value="mistral">Mistral</option>
-              <option value="codellama">Code Llama</option>
-              <option value="vicuna">Vicuna</option>
-            </select>
+            <div class="model-input-group">
+              <select id="ollama-model-preset" name="ollama-model-preset">
+                <option value="custom">Custom Model</option>
+                <option value="llama2">Llama 2</option>
+                <option value="mistral">Mistral</option>
+                <option value="codellama">Code Llama</option>
+                <option value="vicuna">Vicuna</option>
+              </select>
+              <input type="text" 
+                     id="ollama-model" 
+                     name="ollama-model" 
+                     placeholder="Enter custom model name"
+                     style="display: none;">
+            </div>
+            <p class="help-text">Select a preset model or choose "Custom Model" to enter a specific model name</p>
           </div>
         </div>
       </div>
@@ -176,10 +200,12 @@
         <div class="form-group">
           <label for="api-url">API Base URL</label>
           <input type="text" id="api-url" name="api-url" placeholder="Enter API base URL">
+          <p class="help-text">For Ollama, typically http://localhost:11434</p>
         </div>
         <div class="form-group">
           <label for="api-key">API Key</label>
           <input type="password" id="api-key" name="api-key" placeholder="Enter API key">
+          <p class="help-text">Required for OpenAI, not needed for Ollama</p>
         </div>
       </div>
 
