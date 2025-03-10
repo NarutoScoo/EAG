@@ -1,0 +1,29 @@
+{
+  "manifest_version": 2,
+  "name": "Webpage Summarizer",
+  "version": "1.0",
+  "description": "Summarizes webpage contents",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{c0ee1292-3e43-4f42-b56c-66d8d23d82fe}",
+      "strict_min_version": "42.0"
+    }
+  },
+  "permissions": [
+    "activeTab",
+    "contextMenus",
+    "storage"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "options_ui": {
+    "page": "options.html",
+    "browser_style": true,
+    "open_in_tab": true
+  },
+  "icons": {
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png"
+  }
+} 
