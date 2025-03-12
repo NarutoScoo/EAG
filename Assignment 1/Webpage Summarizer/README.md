@@ -1,44 +1,66 @@
-# Webpage Summarizer
+# Webpage Summarizer Project
 
-A Firefox browser extension that provides quick and efficient webpage summarization. The extension uses both built-in algorithms and AI models to generate comprehensive summaries of web content.
+A comprehensive web page summarization solution consisting of a browser extension and a backend service. This project combines local AI capabilities through Ollama with a user-friendly browser interface for efficient webpage content summarization.
 
-## Features
+## Project Structure
 
-- Right-click context menu integration for easy access
-- Summarize entire pages or selected text
-- Interactive summary interface with clickable keywords
-- Support for multiple AI models:
-  - OpenAI (GPT-3.5, GPT-4)
-  - Ollama (Local models like Llama 2, Mistral)
-- Dark mode support
-- Configurable settings for AI providers
+```
+Webpage Summarizer/
+├── Backend/           # Flask/Dash backend service
+├── Extension/         # Firefox browser extension
+└── Test/             # API test interface
+```
 
-## Changelog
+## Components
 
-### Features
-- Initial extension setup with basic summarization
-- Add AI-powered summarization with OpenAI/Ollama support
-- Add context menu integration
-- Add selection/full page summarization choice
-- Add interactive keyword highlighting
-- Add loading indicator for summarization progress
-- Add settings page with model configuration
-- Add custom model support for Ollama
+### Backend Service
+- Flask/Dash application providing both web UI and REST API
+- Integrates with Ollama for AI model management
+- Features include:
+  - Interactive web interface
+  - Model selection and management
+  - Temperature control for responses
+  - REST API endpoints for external access
+  - CORS support for cross-origin requests
 
-### Bug Fixes
-- Fix double modal issue in summarization
-- Fix options page model switching and visibility
-- Fix settings page layout and restore functionality
+### Browser Extension
+- Firefox extension for webpage summarization
+- Features include:
+  - Context menu integration
+  - Full page or selection summarization
+  - Multiple AI provider support (OpenAI, Ollama)
+  - Interactive summary interface
+  - Dark mode support
+  - Configurable settings
+
+### Test Interface
+- HTML-based API testing interface
+- Allows direct interaction with backend API endpoints
+- Useful for development and testing
 
 ## Setup
 
-1. Configure your preferred AI provider in the extension settings
-2. For OpenAI: Enter your API key
-3. For Ollama: Ensure your local instance is running (default: http://localhost:11434)
+1. Backend Setup
+   - Install Python dependencies: `pip install -r Backend/requirements.txt`
+   - Start the Flask server: `python Backend/app.py`
+   - Server will run on `http://localhost:8050`
 
-## Usage
+2. Extension Setup
+   - Load the extension in Firefox
+   - Configure preferred AI provider in settings
+   - For Ollama: Ensure local instance is running on `http://localhost:11434`
 
-1. Right-click anywhere on a webpage
-2. Select "Summarize" from the context menu
-3. If text is selected, choose between summarizing selection or entire page
-4. View the generated summary with interactive keywords and sections 
+## Development
+
+- Backend API documentation available in Backend/README.md
+- Extension development details in Extension/README.md
+- Test interface available for API endpoint testing
+
+## Recent Changes
+
+### [2024-03-12]
+- feat(api): Improve CORS handling and reduce logging verbosity
+  - Simplified CORS configuration
+  - Reduced logging output
+  - Fixed cross-origin issues
+  - Added comprehensive documentation 
