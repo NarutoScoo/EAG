@@ -46,6 +46,11 @@
     };
   }
 
+  function highlightText(text, keyword) {
+    const regex = new RegExp(`(${keyword})`, 'gi');
+    return text.replace(regex, '<mark style="background-color: #fff3cd; padding: 2px 4px; border-radius: 2px;">$1</mark>');
+  }
+
   async function summarizeText(text) {
     try {
       // First, get the basic summary
@@ -106,72 +111,128 @@
           }
         } else {
           try {
-            const response = await fetch(`${settings.apiUrl}/api/generate`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
+            // Use browser.runtime.sendMessage to handle the request through background script
+            const message = {
+              type: 'summarize',
+              data: {
                 model: settings.ollamaModel,
                 prompt: `Please provide a summary of the following text, including key points and important details:\n\n${text}`,
-                stream: false
-              })
-            });
+                temperature: 0.7
+              }
+            };
 
-            if (!response.ok) {
-              const errorText = await response.text();
-              console.error('Ollama API Error:', errorText);
-              throw new Error(`Ollama API error (${response.status}): ${errorText}`);
+            let data;
+            // First try direct fetch with proper headers
+            try {
+              const response = await fetch('http://localhost:8050/api/generate', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Origin': 'moz-extension://' + browser.runtime.id
+                },
+                body: JSON.stringify(message.data)
+              });
+
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+
+              data = await response.json();
+              if (data.status === 'error') {
+                throw new Error(data.message);
+              }
+              aiSummary = data.response;
+              console.log('Received response from API:', data.response);
+            } catch (directFetchError) {
+              console.warn('Direct fetch failed, trying through background script:', directFetchError);
+              
+              // Fallback to background script if direct fetch fails
+              const result = await browser.runtime.sendMessage(message);
+              if (result.error) {
+                throw new Error(result.error);
+              }
+              aiSummary = result.response;
+              console.log('Received response through background script:', result.response);
             }
 
-            const data = await response.json();
-            aiSummary = data.response;
+            // If we got a response, update the UI immediately with the raw AI response
+            if (aiSummary && currentModal) {
+              // Split the AI response into sections
+              const sections = aiSummary.split('\n').filter(line => line.trim());
+              
+              // Create a formatted summary object
+              const aiFormattedSummary = {
+                keywords: basicSummary.keywords, // Keep the basic keywords for now
+                overview: sections[0] || '', // First paragraph as overview
+                keyPoints: sections.slice(1, -2), // Middle sections as key points
+                importantDetails: sections.slice(-2) // Last two sections as important details
+              };
+
+              // Update the UI with the AI response
+              updateSummaryContent(currentModal, aiFormattedSummary);
+              
+              // Now process the AI text for keywords
+              const words = aiSummary.toLowerCase().match(/\b\w+\b/g) || [];
+              const commonWords = new Set(['this', 'that', 'these', 'those', 'then', 'than', 'with', 'will', 'have', 'from', 'what', 'when', 'where', 'which', 'there', 'their', 'about', 'would', 'could', 'should']);
+              const wordFreq = {};
+              words.forEach(word => {
+                if (word.length > 3 && !commonWords.has(word)) {
+                  wordFreq[word] = (wordFreq[word] || 0) + 1;
+                }
+              });
+
+              const aiKeywords = Object.entries(wordFreq)
+                .filter(([_, freq]) => freq >= 2)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 8)
+                .map(([word, freq]) => ({
+                  word,
+                  frequency: freq
+                }));
+
+              console.log('Extracted Keywords:', aiKeywords);
+
+              // Update just the keywords in the UI
+              if (currentModal) {
+                const contentWrapper = currentModal.querySelector('div[style*="overflow-y: auto"]');
+                if (contentWrapper) {
+                  const keywordsContainer = contentWrapper.querySelector('#keywords-container');
+                  if (keywordsContainer) {
+                    const keywordsHTML = aiKeywords
+                      .map(({word, frequency}) => `
+                        <span 
+                          class="keyword-tag"
+                          data-keyword="${word.toLowerCase()}"
+                          style="
+                            display: inline-block;
+                            margin: 4px;
+                            padding: 4px 12px;
+                            background: #f8f9fa;
+                            border-radius: 15px;
+                            font-size: 14px;
+                            color: #2c3e50;
+                            border: 1px solid #e9ecef;
+                            cursor: pointer;
+                            transition: all 0.2s ease;
+                          "
+                        >${word}</span>
+                      `)
+                      .join('');
+                    keywordsContainer.innerHTML = keywordsHTML;
+                  }
+                }
+              }
+            }
           } catch (fetchError) {
-            console.error('Ollama Fetch Error:', fetchError);
-            throw new Error(`Failed to connect to Ollama API: ${fetchError.message}`);
+            console.error('Backend Fetch Error:', fetchError);
+            throw new Error(`Failed to connect to Backend API: ${fetchError.message}`);
           }
         }
-
-        // Process the AI summary
-        const sentences = aiSummary.match(/[^.!?]+[.!?]+/g) || [];
-        const words = aiSummary.toLowerCase().match(/\b\w+\b/g) || [];
-        
-        // Extract keywords from AI summary
-        const commonWords = new Set(['this', 'that', 'these', 'those', 'then', 'than', 'with', 'will', 'have', 'from', 'what', 'when', 'where', 'which', 'there', 'their', 'about', 'would', 'could', 'should']);
-        const wordFreq = {};
-        words.forEach(word => {
-          if (word.length > 3 && !commonWords.has(word)) {
-            wordFreq[word] = (wordFreq[word] || 0) + 1;
-          }
-        });
-
-        const aiKeywords = Object.entries(wordFreq)
-          .filter(([_, freq]) => freq >= 2)
-          .sort(([,a], [,b]) => b - a)
-          .slice(0, 8)
-          .map(([word, freq]) => ({
-            word,
-            frequency: freq
-          }));
-
-        // Update the existing summary with AI-enhanced content
-        if (currentModal) {
-          updateSummaryContent(currentModal, {
-            keywords: aiKeywords,
-            overview: sentences.slice(0, 2).join(' '),
-            keyPoints: sentences.slice(2, 6).map(point => point.trim()),
-            importantDetails: sentences.slice(6).map(detail => detail.trim())
-          });
-        }
-
       } catch (error) {
         console.error('AI summarization error:', error);
-        // If AI fails, update the content to show the error but keep the basic summary
+        // On failure, keep showing the basic summary
         if (currentModal) {
-          updateSummaryContent(currentModal, {
-            ...basicSummary,
-            overview: `${basicSummary.overview}\n\nNote: AI enhancement failed - ${error.message}`
-          });
+          updateSummaryContent(currentModal, basicSummary);
         }
       }
 

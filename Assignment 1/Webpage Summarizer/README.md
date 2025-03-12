@@ -29,9 +29,10 @@ Webpage Summarizer/
   - Context menu integration
   - Full page or selection summarization
   - Multiple AI provider support (OpenAI, Ollama)
-  - Interactive summary interface
+  - Interactive summary interface with keyword highlighting
   - Dark mode support
-  - Configurable settings
+  - Progressive UI updates
+  - Robust error handling and fallback behavior
 
 ### Test Interface
 - HTML-based API testing interface
@@ -59,8 +60,10 @@ Webpage Summarizer/
 ## Recent Changes
 
 ### [2024-03-12]
-- feat(api): Improve CORS handling and reduce logging verbosity
-  - Simplified CORS configuration
-  - Reduced logging output
-  - Fixed cross-origin issues
-  - Added comprehensive documentation 
+- fix(extension): Resolved network connectivity issues with Ollama API
+  - Implemented dual-path API communication
+  - Added proper error handling and fallback to basic summary
+  - Enhanced UI with progressive updates
+  - Improved keyword extraction and display
+  - Added detailed console logging
+  - Updated documentation and testing interface 

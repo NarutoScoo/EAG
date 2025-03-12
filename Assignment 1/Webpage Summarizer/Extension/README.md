@@ -1,44 +1,53 @@
-# Webpage Summarizer
+# Webpage Summarizer Extension
 
-A Firefox browser extension that provides quick and efficient webpage summarization. The extension uses both built-in algorithms and AI models to generate comprehensive summaries of web content.
+A Firefox extension that provides intelligent webpage summarization using both local and AI-powered analysis.
 
 ## Features
 
-- Right-click context menu integration for easy access
-- Summarize entire pages or selected text
-- Interactive summary interface with clickable keywords
-- Support for multiple AI models:
-  - OpenAI (GPT-3.5, GPT-4)
-  - Ollama (Local models like Llama 2, Mistral)
+- Instant basic summarization using keyword frequency analysis
+- AI-enhanced summaries using Ollama or OpenAI
+- Interactive keyword highlighting
 - Dark mode support
-- Configurable settings for AI providers
+- Context menu integration
+- Configurable AI providers and models
 
-## Changelog
+## Recent Changes
 
-### Features
-- Initial extension setup with basic summarization
-- Add AI-powered summarization with OpenAI/Ollama support
-- Add context menu integration
-- Add selection/full page summarization choice
-- Add interactive keyword highlighting
-- Add loading indicator for summarization progress
-- Add settings page with model configuration
-- Add custom model support for Ollama
-
-### Bug Fixes
-- Fix double modal issue in summarization
-- Fix options page model switching and visibility
-- Fix settings page layout and restore functionality
+### [2024-03-12]
+- Fixed network connectivity issues with Ollama API
+- Improved error handling and fallback behavior
+- Enhanced UI response with progressive updates
+- Added proper keyword extraction from AI responses
+- Implemented dual-path API communication (direct and background script)
+- Added detailed console logging for debugging
 
 ## Setup
 
-1. Configure your preferred AI provider in the extension settings
-2. For OpenAI: Enter your API key
-3. For Ollama: Ensure your local instance is running (default: http://localhost:11434)
+1. Install the extension in Firefox
+2. Configure your preferred AI provider in the extension settings:
+   - For OpenAI: Enter your API key
+   - For Ollama: Ensure local Ollama instance is running
+3. Access the summarizer through:
+   - Context menu (right-click)
+   - Page actions menu
+
+## Configuration
+
+### OpenAI Settings
+- API Key required
+- Supports multiple models (GPT-3.5, GPT-4, etc.)
+- Default endpoint: api.openai.com
+
+### Ollama Settings
+- No API key required
+- Local instance must be running
+- Default endpoint: localhost:8050 (through backend server)
+- Supports various models (Mistral, Llama2, etc.)
 
 ## Usage
 
-1. Right-click anywhere on a webpage
-2. Select "Summarize" from the context menu
-3. If text is selected, choose between summarizing selection or entire page
-4. View the generated summary with interactive keywords and sections 
+1. Navigate to any webpage
+2. Right-click and select "Summarize Page" or select text to summarize
+3. View the instant basic summary while AI processing occurs
+4. Interact with keywords to highlight relevant sections
+5. Dark mode automatically adapts to system preferences 
