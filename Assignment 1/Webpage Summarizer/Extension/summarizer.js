@@ -59,8 +59,30 @@
       // Show the basic summary immediately
       currentModal = await showSummary(basicSummary);
 
-      // Show loading state for AI summary
-      updateSummaryContent(currentModal, basicSummary, true);
+      // Show only loading state for AI summary (without basic summary)
+      const contentWrapper = currentModal.querySelector('div[style*="overflow-y: auto"]');
+      if (contentWrapper) {
+        contentWrapper.innerHTML = `
+          <div style="text-align: center; padding: 20px;">
+            <div style="
+              width: 40px;
+              height: 40px;
+              margin: 0 auto 15px;
+              border: 3px solid #f3f3f3;
+              border-top: 3px solid #3498db;
+              border-radius: 50%;
+              animation: spin 1s linear infinite;
+            "></div>
+            <p style="color: #666;">Enhancing summary with AI...</p>
+          </div>
+          <style>
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          </style>
+        `;
+      }
 
       // Then try to get AI-enhanced summary
       const settings = await browser.storage.sync.get({
@@ -142,36 +164,24 @@
                 throw new Error(data.message);
               }
               aiSummary = data.response;
-              console.log('Received response from API:', data.response);
             } catch (directFetchError) {
               console.warn('Direct fetch failed, trying through background script:', directFetchError);
               
               // Fallback to background script if direct fetch fails
               const result = await browser.runtime.sendMessage(message);
+              
               if (result.error) {
                 throw new Error(result.error);
               }
+              if (!result.success || !result.response) {
+                throw new Error('Invalid response from background script');
+              }
               aiSummary = result.response;
-              console.log('Received response through background script:', result.response);
             }
 
             // If we got a response, update the UI immediately with the raw AI response
             if (aiSummary && currentModal) {
-              // Split the AI response into sections
-              const sections = aiSummary.split('\n').filter(line => line.trim());
-              
-              // Create a formatted summary object
-              const aiFormattedSummary = {
-                keywords: basicSummary.keywords, // Keep the basic keywords for now
-                overview: sections[0] || '', // First paragraph as overview
-                keyPoints: sections.slice(1, -2), // Middle sections as key points
-                importantDetails: sections.slice(-2) // Last two sections as important details
-              };
-
-              // Update the UI with the AI response
-              updateSummaryContent(currentModal, aiFormattedSummary);
-              
-              // Now process the AI text for keywords
+              // Process the AI text for keywords
               const words = aiSummary.toLowerCase().match(/\b\w+\b/g) || [];
               const commonWords = new Set(['this', 'that', 'these', 'those', 'then', 'than', 'with', 'will', 'have', 'from', 'what', 'when', 'where', 'which', 'there', 'their', 'about', 'would', 'could', 'should']);
               const wordFreq = {};
@@ -192,36 +202,117 @@
 
               console.log('Extracted Keywords:', aiKeywords);
 
-              // Update just the keywords in the UI
-              if (currentModal) {
-                const contentWrapper = currentModal.querySelector('div[style*="overflow-y: auto"]');
-                if (contentWrapper) {
-                  const keywordsContainer = contentWrapper.querySelector('#keywords-container');
-                  if (keywordsContainer) {
-                    const keywordsHTML = aiKeywords
-                      .map(({word, frequency}) => `
-                        <span 
-                          class="keyword-tag"
-                          data-keyword="${word.toLowerCase()}"
-                          style="
-                            display: inline-block;
-                            margin: 4px;
-                            padding: 4px 12px;
-                            background: #f8f9fa;
-                            border-radius: 15px;
-                            font-size: 14px;
-                            color: #2c3e50;
-                            border: 1px solid #e9ecef;
-                            cursor: pointer;
-                            transition: all 0.2s ease;
-                          "
-                        >${word}</span>
-                      `)
-                      .join('');
-                    keywordsContainer.innerHTML = keywordsHTML;
-                  }
-                }
+              // Update the UI with the AI response and keywords
+              const contentWrapper = currentModal.querySelector('div[style*="overflow-y: auto"]');
+
+              if (contentWrapper) {
+                // Format the AI summary by replacing newlines with paragraphs
+                const formattedSummary = aiSummary
+                  .split('\n')
+                  .filter(line => line.trim())
+                  .map(line => `<p style="margin-bottom: 10px;">${line}</p>`)
+                  .join('');
+
+                const keywordsHTML = aiKeywords
+                  .map(({word, frequency}) => `
+                    <span 
+                      class="keyword-tag"
+                      data-keyword="${word.toLowerCase()}"
+                      style="
+                        display: inline-block;
+                        margin: 4px;
+                        padding: 4px 12px;
+                        background: #f8f9fa;
+                        border-radius: 15px;
+                        font-size: 14px;
+                        color: #2c3e50;
+                        border: 1px solid #e9ecef;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                      "
+                    >${word}</span>
+                  `)
+                  .join('');
+
+                // Create the new content
+                const newContent = `
+                  <style>
+                    .keyword-tag:hover {
+                      background: #e9ecef !important;
+                      transform: translateY(-1px);
+                    }
+                    .keyword-tag.active {
+                      background: #3498db !important;
+                      color: white !important;
+                      border-color: #3498db !important;
+                    }
+                    .content-section {
+                      transition: all 0.3s ease;
+                    }
+                    .content-section.highlight {
+                      background: #f8f9fa;
+                      border-radius: 8px;
+                      padding: 15px;
+                      margin: -15px;
+                    }
+                  </style>
+                  <div style="margin-bottom: 25px;">
+                    <h3 style="color: #34495e; margin-bottom: 12px;">Key Terms</h3>
+                    <div style="line-height: 2;" id="keywords-container">${keywordsHTML}</div>
+                  </div>
+                  <div class="content-section" style="margin-bottom: 25px;" data-section="summary">
+                    <h3 style="color: #34495e; margin-bottom: 12px;">AI Summary</h3>
+                    <div style="line-height: 1.6; color: #2c3e50;">${formattedSummary}</div>
+                  </div>
+                `;
+
+                contentWrapper.innerHTML = newContent;
+
+                // Reattach event listeners for keywords
+                const keywordTags = contentWrapper.querySelectorAll('.keyword-tag');
+                const contentSections = contentWrapper.querySelectorAll('.content-section');
+                let activeKeyword = null;
+
+                keywordTags.forEach(tag => {
+                  tag.addEventListener('click', () => {
+                    const keyword = tag.dataset.keyword;
+                    
+                    if (activeKeyword === keyword) {
+                      activeKeyword = null;
+                      keywordTags.forEach(t => t.classList.remove('active'));
+                      contentSections.forEach(section => {
+                        section.classList.remove('highlight');
+                        section.innerHTML = section.innerHTML.replace(/<mark[^>]*>(.*?)<\/mark>/g, '$1');
+                      });
+                      return;
+                    }
+
+                    activeKeyword = keyword;
+                    keywordTags.forEach(t => t.classList.remove('active'));
+                    tag.classList.add('active');
+
+                    contentSections.forEach(section => {
+                      const originalContent = section.innerHTML.replace(/<mark[^>]*>(.*?)<\/mark>/g, '$1');
+                      const hasMatch = originalContent.toLowerCase().includes(keyword);
+                      
+                      section.classList.toggle('highlight', hasMatch);
+                      if (hasMatch) {
+                        section.innerHTML = highlightText(originalContent, keyword);
+                        section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                      } else {
+                        section.innerHTML = originalContent;
+                      }
+                    });
+                  });
+                });
+              } else {
+                console.error('Content wrapper not found in modal');
               }
+            } else {
+              console.error('No AI summary or modal not available:', { 
+                hasAiSummary: !!aiSummary, 
+                hasModal: !!currentModal 
+              });
             }
           } catch (fetchError) {
             console.error('Backend Fetch Error:', fetchError);
@@ -230,13 +321,13 @@
         }
       } catch (error) {
         console.error('AI summarization error:', error);
-        // On failure, keep showing the basic summary
+        // On failure, show the basic summary
         if (currentModal) {
           updateSummaryContent(currentModal, basicSummary);
         }
       }
 
-      return basicSummary;
+      return null;
     } catch (error) {
       console.error('Summarization error:', error);
       return {
@@ -660,10 +751,7 @@
     try {
       const content = await getPageContent();
       if (content) {
-        const summary = await summarizeText(content);
-        if (summary) {
-          await showSummary(summary);
-        }
+        await summarizeText(content);
       }
     } catch (error) {
       console.error('Error in main execution:', error);

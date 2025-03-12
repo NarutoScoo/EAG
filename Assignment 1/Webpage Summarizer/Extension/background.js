@@ -16,13 +16,17 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
 
       const data = await response.json();
       if (data.status === 'error') {
-        return { error: data.message };
+        return Promise.resolve({ error: data.message });
       }
 
-      return { response: data.response };
+      // Properly structure the response
+      return Promise.resolve({ 
+        success: true,
+        response: data.response 
+      });
     } catch (error) {
       console.error('Background script error:', error);
-      return { error: error.message };
+      return Promise.resolve({ error: error.message });
     }
   }
 });

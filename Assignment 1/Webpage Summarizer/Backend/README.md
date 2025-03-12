@@ -1,44 +1,87 @@
 # Webpage Summarizer Backend
 
-A Flask-based backend service that provides a web interface and REST API endpoints for interacting with the Ollama API. The application is built using Dash and includes features for model selection, query submission, and response generation.
+A Flask/Dash application providing both a web interface and REST API for AI-powered text summarization.
 
 ## Features
 
-- Web interface with dark/light mode toggle
-- Model selection with refresh capability
-- Temperature control for response generation
-- Keyboard shortcuts for query submission
-- REST API endpoints for external applications
-- CORS support for cross-origin requests
+- **Web Interface**
+  - Interactive model selection
+  - Real-time summarization
+  - Temperature control
+  - Dark mode support
+
+- **REST API**
+  - `/api/models` - List available models
+  - `/api/generate` - Generate summaries
+  - CORS support for cross-origin requests
+  - Proper error handling and responses
+
+- **Ollama Integration**
+  - Direct model management
+  - Multiple model support
+  - Configurable parameters
+  - Error handling and recovery
+
+## Setup
+
+1. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. Start the server:
+   ```bash
+   python app.py
+   ```
+
+3. Access the interfaces:
+   - Web UI: `http://localhost:8050`
+   - API: `http://localhost:8050/api`
 
 ## API Endpoints
 
 ### GET /api/models
-Returns a list of available Ollama models.
+Lists available Ollama models.
+
+Response:
+```json
+{
+    "status": "success",
+    "models": ["mistral", "llama2", ...]
+}
+```
 
 ### POST /api/generate
-Generates a response using the specified model and prompt.
+Generates a summary using specified model.
 
-Required parameters:
-- model: The name of the Ollama model to use
-- prompt: The input text to generate from
-- temperature (optional): Controls randomness in the response (0.0 to 1.0, default: 0.7)
+Request:
+```json
+{
+    "model": "mistral",
+    "prompt": "Text to summarize",
+    "temperature": 0.7
+}
+```
 
-## Dependencies
+Response:
+```json
+{
+    "status": "success",
+    "response": "Generated summary..."
+}
+```
 
-- dash
-- dash-mantine-components
-- dash-iconify
-- requests
-- flask-cors
-- markdown2
+## Error Handling
 
-## Changelog
+- Proper HTTP status codes
+- Detailed error messages
+- Graceful failure handling
+- CORS error prevention
+
+## Recent Updates
 
 ### [2024-03-12]
-- feat(api): Improve CORS handling and reduce logging verbosity
-  - Simplified CORS configuration by using Flask-CORS with global settings
-  - Added CORS headers to all responses via after_request handler
-  - Changed logging level from INFO to WARNING to reduce console output
-  - Restructured Flask app initialization for better CORS support
-  - Fixed cross-origin issues for API endpoints 
+- Enhanced CORS support
+- Improved error handling
+- Added detailed logging
+- Updated documentation 

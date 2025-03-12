@@ -31,8 +31,9 @@ Webpage Summarizer/
   - Multiple AI provider support (OpenAI, Ollama)
   - Interactive summary interface with keyword highlighting
   - Dark mode support
-  - Progressive UI updates
+  - Progressive UI updates with loading indicators
   - Robust error handling and fallback behavior
+  - Keyword extraction and interactive highlighting
 
 ### Test Interface
 - HTML-based API testing interface
@@ -60,10 +61,12 @@ Webpage Summarizer/
 ## Recent Changes
 
 ### [2024-03-12]
-- fix(extension): Resolved network connectivity issues with Ollama API
-  - Implemented dual-path API communication
-  - Added proper error handling and fallback to basic summary
-  - Enhanced UI with progressive updates
+- fix(extension): Improved UI/UX and error handling
+  - Fixed AI summary display issues
+  - Enhanced loading state behavior
   - Improved keyword extraction and display
-  - Added detailed console logging
-  - Updated documentation and testing interface 
+  - Removed unnecessary console logging
+  - Added keyword frequency debugging
+  - Fixed basic summary fallback behavior
+  - Enhanced error handling for API responses
+  - Updated documentation 
