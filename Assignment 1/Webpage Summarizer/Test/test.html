@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ollama API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #response {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            background-color: #f8f9fa;
+        }
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            color: #28a745;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .loading {
+            display: inline-block;
+            margin-left: 10px;
+        }
+        #status {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Ollama API Test</h1>
+        
+        <div id="status"></div>
+
+        <div class="form-group">
+            <label for="model">Model:</label>
+            <select id="model">
+                <option value="">Loading models...</option>
+            </select>
+            <button onclick="refreshModels()" style="margin-top: 5px;">Refresh Models</button>
+        </div>
+
+        <div class="form-group">
+            <label for="prompt">Prompt:</label>
+            <textarea id="prompt" placeholder="Enter your prompt here..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="temperature">Temperature:</label>
+            <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7" 
+                   oninput="tempOutput.value = temperature.value">
+            <output id="tempOutput">0.7</output>
+        </div>
+
+        <button onclick="generateResponse()" id="submitBtn">Generate Response</button>
+        <span id="loading" class="loading" style="display: none;">Processing...</span>
+
+        <div id="response"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8050';
+        
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = type;
+            statusDiv.textContent = message;
+        }
+
+        // Function to load available models
+        async function loadModels() {
+            try {
+                showStatus('Loading models...', 'info');
+                console.log('Fetching models...');
+                
+                const response = await fetch(`${API_BASE_URL}/api/models`);
+                console.log('Response received:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Models data:', data);
+                
+                if (data.status === 'success') {
+                    const modelSelect = document.getElementById('model');
+                    if (data.models.length === 0) {
+                        showStatus('No models available', 'error');
+                        modelSelect.innerHTML = '<option value="">No models available</option>';
+                    } else {
+                        modelSelect.innerHTML = data.models
+                            .map(model => `<option value="${model}">${model}</option>`)
+                            .join('');
+                        showStatus(`Loaded ${data.models.length} models`, 'success');
+                    }
+                } else {
+                    throw new Error(data.message || 'Failed to load models');
+                }
+            } catch (error) {
+                console.error('Error loading models:', error);
+                showStatus(`Error loading models: ${error.message}`, 'error');
+                document.getElementById('model').innerHTML = 
+                    '<option value="">Error loading models</option>';
+            }
+        }
+
+        // Function to refresh models
+        async function refreshModels() {
+            document.getElementById('model').innerHTML = 
+                '<option value="">Loading models...</option>';
+            await loadModels();
+        }
+
+        // Function to generate response
+        async function generateResponse() {
+            const model = document.getElementById('model').value;
+            const prompt = document.getElementById('prompt').value;
+            const temperature = parseFloat(document.getElementById('temperature').value);
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const responseDiv = document.getElementById('response');
+
+            if (!model || !prompt) {
+                showStatus('Please select a model and enter a prompt', 'error');
+                return;
+            }
+
+            try {
+                submitBtn.disabled = true;
+                loading.style.display = 'inline-block';
+                responseDiv.innerHTML = '';
+                showStatus('Generating response...', 'info');
+
+                console.log('Sending generate request:', { model, prompt, temperature });
+                const response = await fetch(`${API_BASE_URL}/api/generate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model,
+                        prompt,
+                        temperature
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Generate response:', data);
+                
+                if (data.status === 'success') {
+                    responseDiv.innerHTML = data.response;
+                    showStatus('Response generated successfully', 'success');
+                } else {
+                    throw new Error(data.message || 'Failed to generate response');
+                }
+            } catch (error) {
+                console.error('Error generating response:', error);
+                showStatus(`Error: ${error.message}`, 'error');
+                responseDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            } finally {
+                submitBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        }
+
+        // Load models when page loads
+        document.addEventListener('DOMContentLoaded', loadModels);
+    </script>
+</body>
+</html> 
