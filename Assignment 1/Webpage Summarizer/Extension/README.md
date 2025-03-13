@@ -1,107 +1,84 @@
 # Webpage Summarizer Extension
 
-A Firefox browser extension that provides AI-powered webpage summarization with an interactive user interface.
+A Firefox browser extension that provides AI-powered webpage summarization with support for both OpenAI and Ollama models.
 
 ## Features
 
-- **Multiple AI Provider Support**
-  - OpenAI integration (requires API key)
-  - Local Ollama integration
-  - Configurable model selection
-
-- **Summarization Options**
-  - Full page summarization
-  - Selected text summarization
-  - Context menu integration
-  - Progressive loading indicators
-
-- **Interactive UI**
+- Context menu integration for easy access
+- Support for both full page and selected text summarization
+- Multiple AI provider support:
+  - OpenAI (GPT-3.5, GPT-4)
+  - Ollama (local models)
+- Interactive summary interface:
   - Keyword highlighting and filtering
   - Dark mode support
-  - Responsive modal interface
-  - Interactive keyword tags
-  - Frequency-based keyword extraction
-
-- **Error Handling**
-  - Robust API error handling
+  - Clean text formatting
+  - Preserved line breaks
+  - Progressive loading states
+- Robust error handling:
   - Fallback to basic summarization
-  - Multiple API endpoint attempts
-  - Detailed error messages
-
-- **Development Features**
-  - Keyword frequency debugging
-  - Essential error logging
-  - Clean console output
-  - Dual-path API communication
+  - Clear error messages
+  - Network error recovery
+- Configurable settings:
+  - Model selection
+  - API configuration
+  - Temperature control
 
 ## Installation
 
 1. Load the extension in Firefox:
    - Open Firefox
-   - Navigate to `about:debugging`
+   - Go to `about:debugging`
    - Click "This Firefox"
    - Click "Load Temporary Add-on"
-   - Select `manifest.json` from the extension directory
+   - Select any file from the extension directory
 
 2. Configure the extension:
    - Click the extension icon
    - Open settings
-   - Choose AI provider (OpenAI or Ollama)
-   - Configure API settings:
-     - For OpenAI: Enter API key
-     - For Ollama: Verify localhost:11434 is accessible
+   - Choose your preferred AI provider
+   - Configure API settings if needed
 
 ## Usage
 
-1. **Basic Usage**
-   - Right-click on any webpage
-   - Select "Summarize Page"
-   - Wait for AI-enhanced summary
+1. Right-click on any webpage or selected text
+2. Choose "Summarize" from the context menu
+3. View the generated summary with:
+   - Key terms (clickable for highlighting)
+   - Formatted text content
+   - Interactive keyword filtering
 
-2. **Text Selection**
-   - Select specific text
-   - Right-click selection
-   - Choose summarization option
-   - View targeted summary
+## Recent Changes
 
-3. **Keyword Interaction**
-   - Click keywords to highlight in summary
-   - Click again to remove highlighting
-   - Keywords are sorted by frequency
-
-4. **Error Recovery**
-   - Automatic fallback to basic summary
-   - Clear error messages
-   - Retry mechanisms for API failures
-
-## Recent Updates
-
-### [2024-03-12]
-- Fixed AI summary display issues
-- Enhanced loading state behavior
-- Improved keyword extraction and display
-- Streamlined console logging
-- Added keyword frequency debugging
-- Fixed basic summary fallback
-- Enhanced error handling
-- Updated documentation
+### [2024-03-13]
+- Improved text display:
+  - Removed markdown rendering for better reliability
+  - Added proper line break preservation
+  - Enhanced text formatting and readability
+- Enhanced error handling:
+  - Better API response validation
+  - Improved error messaging
+  - Robust fallback behavior
+- UI improvements:
+  - Cleaner content sections
+  - Better keyword highlighting
+  - Improved loading states
+- Security updates:
+  - Updated content security policy
+  - Improved API request handling
+  - Enhanced response validation
 
 ## Development
 
-- Extension uses Firefox WebExtensions API
-- Modular code structure
-- Event-driven architecture
-- Progressive enhancement approach
+- The extension uses vanilla JavaScript for better performance
+- Content script handles webpage interaction
+- Background script manages API communication
+- Options page provides configuration interface
 
-## Configuration
+## Files
 
-### OpenAI Settings
-- API Key required
-- Supports multiple models (GPT-3.5, GPT-4, etc.)
-- Default endpoint: api.openai.com
-
-### Ollama Settings
-- No API key required
-- Local instance must be running
-- Default endpoint: localhost:8050 (through backend server)
-- Supports various models (Mistral, Llama2, etc.) 
+- `manifest.json`: Extension configuration
+- `background.js`: Background script for API handling
+- `summarizer.js`: Main content script
+- `options.js`: Settings management
+- `options.html`: Settings interface 

@@ -206,13 +206,6 @@
               const contentWrapper = currentModal.querySelector('div[style*="overflow-y: auto"]');
 
               if (contentWrapper) {
-                // Format the AI summary by replacing newlines with paragraphs
-                const formattedSummary = aiSummary
-                  .split('\n')
-                  .filter(line => line.trim())
-                  .map(line => `<p style="margin-bottom: 10px;">${line}</p>`)
-                  .join('');
-
                 const keywordsHTML = aiKeywords
                   .map(({word, frequency}) => `
                     <span 
@@ -234,7 +227,7 @@
                   `)
                   .join('');
 
-                // Create the new content
+                // Create the new content with simple text formatting
                 const newContent = `
                   <style>
                     .keyword-tag:hover {
@@ -255,14 +248,18 @@
                       padding: 15px;
                       margin: -15px;
                     }
+                    .summary-text {
+                      color: #2c3e50;
+                      line-height: 1.6;
+                      white-space: pre-wrap;
+                    }
                   </style>
                   <div style="margin-bottom: 25px;">
                     <h3 style="color: #34495e; margin-bottom: 12px;">Key Terms</h3>
                     <div style="line-height: 2;" id="keywords-container">${keywordsHTML}</div>
                   </div>
                   <div class="content-section" style="margin-bottom: 25px;" data-section="summary">
-                    <h3 style="color: #34495e; margin-bottom: 12px;">AI Summary</h3>
-                    <div style="line-height: 1.6; color: #2c3e50;">${formattedSummary}</div>
+                    <div class="summary-text">${aiSummary}</div>
                   </div>
                 `;
 

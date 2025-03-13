@@ -20,7 +20,7 @@
     "http://localhost:11434/*",
     "https://api.openai.com/*"
   ],
-  "content_security_policy": "script-src 'self'; connect-src 'self' http://localhost:8050 http://localhost:11434 https://api.openai.com;",
+  "content_security_policy": "script-src 'self'; object-src 'self'; connect-src 'self' http://localhost:8050 http://localhost:11434 https://api.openai.com;",
   "background": {
     "scripts": ["background.js"]
   },

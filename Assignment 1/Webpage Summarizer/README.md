@@ -7,6 +7,10 @@ A comprehensive web page summarization solution consisting of a browser extensio
 ```
 Webpage Summarizer/
 ├── Backend/           # Flask/Dash backend service
+│   ├── app.py        # Main application entry point
+│   ├── api_routes.py # API endpoint definitions
+│   ├── llm_service.py # LLM integration and management
+│   └── ui_components.py # Dash UI components
 ├── Extension/         # Firefox browser extension
 └── Test/             # API test interface
 ```
@@ -14,14 +18,19 @@ Webpage Summarizer/
 ## Components
 
 ### Backend Service
-- Flask/Dash application providing both web UI and REST API
-- Integrates with Ollama for AI model management
+- Modular Flask/Dash application with clean separation of concerns:
+  - `app.py`: Application setup and configuration
+  - `api_routes.py`: REST API endpoint definitions and handlers
+  - `llm_service.py`: LLM integration and response management
+  - `ui_components.py`: Dash UI component definitions
 - Features include:
   - Interactive web interface
   - Model selection and management
   - Temperature control for responses
   - REST API endpoints for external access
   - CORS support for cross-origin requests
+  - Debug logging for development
+  - Modular code organization
 
 ### Browser Extension
 - Firefox extension for webpage summarization
@@ -34,6 +43,8 @@ Webpage Summarizer/
   - Progressive UI updates with loading indicators
   - Robust error handling and fallback behavior
   - Keyword extraction and interactive highlighting
+  - Clean text formatting with preserved line breaks
+  - Simplified UI with clear content sections
 
 ### Test Interface
 - HTML-based API testing interface
@@ -60,13 +71,19 @@ Webpage Summarizer/
 
 ## Recent Changes
 
-### [2024-03-12]
+### [2024-03-13]
+- refactor(backend): Improved code organization and modularity
+  - Split backend into logical modules
+  - Added debug logging
+  - Improved error handling
+  - Better separation of concerns
 - fix(extension): Improved UI/UX and error handling
-  - Fixed AI summary display issues
-  - Enhanced loading state behavior
-  - Improved keyword extraction and display
-  - Removed unnecessary console logging
-  - Added keyword frequency debugging
-  - Fixed basic summary fallback behavior
+  - Enhanced text display with proper line breaks
+  - Removed markdown rendering for simpler text display
+  - Improved keyword extraction and highlighting
+  - Fixed loading state behavior
   - Enhanced error handling for API responses
-  - Updated documentation 
+  - Updated content security policy
+  - Improved response handling from backend
+  - Added better console logging for debugging
+  - Fixed basic summary fallback behavior 
