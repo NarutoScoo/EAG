@@ -44,7 +44,8 @@ Webpage Summarizer/
   - Robust error handling and fallback behavior
   - Keyword extraction and interactive highlighting
   - Clean text formatting with preserved line breaks
-  - Simplified UI with clear content sections
+  - Simplified UI with neutral terminology
+  - User-friendly loading states
 
 ### Test Interface
 - HTML-based API testing interface
@@ -79,7 +80,7 @@ Webpage Summarizer/
   - Better separation of concerns
 - fix(extension): Improved UI/UX and error handling
   - Enhanced text display with proper line breaks
-  - Removed markdown rendering for simpler text display
+  - Updated loading message for better user experience
   - Improved keyword extraction and highlighting
   - Fixed loading state behavior
   - Enhanced error handling for API responses

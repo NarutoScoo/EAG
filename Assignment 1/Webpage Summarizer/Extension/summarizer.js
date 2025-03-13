@@ -73,7 +73,7 @@
               border-radius: 50%;
               animation: spin 1s linear infinite;
             "></div>
-            <p style="color: #666;">Enhancing summary with AI...</p>
+            <p style="color: #666;">Generating comprehensive summary...</p>
           </div>
           <style>
             @keyframes spin {
@@ -353,7 +353,7 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
           "></div>
-          <p style="color: #666;">Enhancing summary with AI...</p>
+          <p style="color: #666;">Generating comprehensive summary...</p>
         </div>
       `;
       
