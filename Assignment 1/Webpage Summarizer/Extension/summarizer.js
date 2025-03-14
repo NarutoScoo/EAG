@@ -1,6 +1,62 @@
 (function() {
   let currentModal = null;
 
+  async function getLLMKeywords(text) {
+    try {
+      // Get settings for the model
+      const settings = await browser.storage.sync.get({
+        modelType: 'openai',
+        openaiModel: 'gpt-3.5-turbo-0125',
+        ollamaModel: 'mistral:latest',
+        apiUrl: 'https://api.openai.com/v1',
+        apiKey: ''
+      });
+
+      const message = {
+        type: 'generate_keywords',
+        data: {
+          model: settings.modelType === 'openai' ? settings.openaiModel : settings.ollamaModel,
+          prompt: `Extract 5-8 of the most important keywords or key phrases that appear verbatim in the text. Only use words or phrases exactly as they appear in the text. Return these keywords as comma-separated values, without any additional text or formatting. Do not add any words that are not present in the original text:\n\n${text}`,
+          temperature: 0.3
+        }
+      };
+
+      const result = await browser.runtime.sendMessage(message);
+      
+      if (result.error) {
+        console.log('LLM keyword error:', result.error);
+        return null;
+      }
+      
+      if (!result.success || !result.keywords) {
+        console.log('Invalid response from LLM keyword generation');
+        return null;
+      }
+
+      // Log the raw response for debugging
+      console.log('Raw LLM response:', result.keywords);
+
+      // Ensure we're working with a string
+      const keywordText = String(result.keywords).trim();
+      
+      // Process comma-separated keywords
+      const keywords = keywordText
+        .split(',')
+        .map(k => k.trim())
+        .filter(k => k.length > 0)
+        .map(word => ({
+          word: word.toLowerCase(),
+          frequency: 1  // Set to 1 as we trust the LLM's selection
+        }));
+
+      console.log('Successfully generated LLM keywords:', keywords);
+      return keywords;
+    } catch (error) {
+      console.error('Error getting LLM keywords:', error);
+      return null;
+    }
+  }
+
   async function basicSummarize(text) {
     // Split text into paragraphs and sentences
     const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
@@ -53,132 +109,109 @@
 
   async function summarizeText(text) {
     try {
-      // First, get the basic summary and show keywords immediately
-      const basicSummary = await basicSummarize(text);
+      // Show initial loading modal
+      currentModal = await showSummary(null);
+
+      // First try to get LLM keywords
+      let keywords = await getLLMKeywords(text);
+      console.log('LLM keyword generation:', keywords ? 'success' : 'failed');
+
+      // If LLM keywords failed, get frequency-based keywords
+      if (!keywords) {
+        console.log('Falling back to frequency-based keywords');
+        const basicSummary = await basicSummarize(text);
+        keywords = basicSummary.keywords;
+      }
       
-      // Show the basic summary immediately
-      currentModal = await showSummary(basicSummary);
+      // Create initial summary with the keywords
+      const initialSummary = {
+        keywords: keywords,
+        overview: '',  // These will be filled by AI summary
+        keyPoints: [],
+        importantDetails: []
+      };
+      
+      // Update the modal with keywords but keep loading state for summary
+      if (currentModal) {
+        const contentWrapper = currentModal.querySelector('div[style*="overflow-y: auto"]');
+        if (contentWrapper) {
+          const keywordsHTML = keywords
+            .map(({word, frequency}) => `
+              <span 
+                class="keyword-tag"
+                data-keyword="${word.toLowerCase()}"
+                style="
+                  display: inline-block;
+                  margin: 4px;
+                  padding: 4px 12px;
+                  background: #f8f9fa;
+                  border-radius: 15px;
+                  font-size: 14px;
+                  color: #2c3e50;
+                  border: 1px solid #e9ecef;
+                  cursor: pointer;
+                  transition: all 0.2s ease;
+                "
+              >${word}</span>
+            `)
+            .join('');
 
-      // Extract keywords from the text immediately
-      const words = text.toLowerCase().match(/\b\w+\b/g) || [];
-      const commonWords = new Set([
-        'this', 'that', 'these', 'those', 'then', 'than', 'with', 'will', 
-        'have', 'from', 'what', 'when', 'where', 'which', 'there', 'their', 
-        'about', 'would', 'could', 'should', 'and', 'the', 'for', 'are', 
-        'was', 'were', 'been', 'being', 'has', 'had', 'does', 'did', 'doing',
-        'can', 'may', 'might', 'must', 'shall', 'into', 'onto', 'upon',
-        'while', 'within', 'without', 'through', 'during', 'before', 'after',
-        'above', 'below', 'over', 'under', 'again', 'once', 'all', 'any',
-        'both', 'each', 'more', 'most', 'other', 'some', 'such'
-      ]);
+          contentWrapper.innerHTML = `
+            <style>
+              .keyword-tag:hover {
+                background: #e9ecef !important;
+                transform: translateY(-1px);
+              }
+              .keyword-tag.active {
+                background: #3498db !important;
+                color: white !important;
+                border-color: #3498db !important;
+              }
+            </style>
+            <div style="margin-bottom: 25px;">
+              <h3 style="color: #34495e; margin-bottom: 12px;">Key Terms</h3>
+              <div style="line-height: 2;" id="keywords-container">${keywordsHTML}</div>
+            </div>
+            <div style="text-align: center; padding: 20px;">
+              <div style="
+                width: 40px;
+                height: 40px;
+                margin: 0 auto 15px;
+                border: 3px solid #f3f3f3;
+                border-top: 3px solid #3498db;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+              "></div>
+              <p style="color: #666;">Generating comprehensive summary...</p>
+            </div>
+            <style>
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+            </style>
+          `;
 
-      const wordFreq = {};
-      words.forEach(word => {
-        if (word.length > 3 && !commonWords.has(word)) {
-          wordFreq[word] = (wordFreq[word] || 0) + 1;
-        }
-      });
+          // Attach event listeners for keywords
+          const keywordTags = contentWrapper.querySelectorAll('.keyword-tag');
+          let activeKeyword = null;
 
-      const initialKeywords = Object.entries(wordFreq)
-        .filter(([_, freq]) => freq >= 2)
-        .sort(([,a], [,b]) => b - a)
-        .slice(0, 8)
-        .map(([word, freq]) => ({
-          word,
-          frequency: freq
-        }));
+          keywordTags.forEach(tag => {
+            tag.addEventListener('click', () => {
+              const keyword = tag.dataset.keyword;
+              
+              if (activeKeyword === keyword) {
+                activeKeyword = null;
+                keywordTags.forEach(t => t.classList.remove('active'));
+                return;
+              }
 
-      // Log the initial keywords
-      console.log('Initial Keywords:', initialKeywords.map(k => `${k.word} (${k.frequency})`));
-
-      // Update UI with initial keywords and loading state
-      const contentWrapper = currentModal.querySelector('div[style*="overflow-y: auto"]');
-      if (contentWrapper) {
-        const keywordsHTML = initialKeywords
-          .map(({word, frequency}) => `
-            <span 
-              class="keyword-tag"
-              data-keyword="${word.toLowerCase()}"
-              style="
-                display: inline-block;
-                margin: 4px;
-                padding: 4px 12px;
-                background: #f8f9fa;
-                border-radius: 15px;
-                font-size: 14px;
-                color: #2c3e50;
-                border: 1px solid #e9ecef;
-                cursor: pointer;
-                transition: all 0.2s ease;
-              "
-            >${word}</span>
-          `)
-          .join('');
-
-        contentWrapper.innerHTML = `
-          <style>
-            .keyword-tag:hover {
-              background: #e9ecef !important;
-              transform: translateY(-1px);
-            }
-            .keyword-tag.active {
-              background: #3498db !important;
-              color: white !important;
-              border-color: #3498db !important;
-            }
-            .content-section {
-              transition: all 0.3s ease;
-            }
-            .content-section.highlight {
-              background: #f8f9fa;
-              border-radius: 8px;
-              padding: 15px;
-              margin: -15px;
-            }
-          </style>
-          <div style="margin-bottom: 25px;">
-            <h3 style="color: #34495e; margin-bottom: 12px;">Key Terms</h3>
-            <div style="line-height: 2;" id="keywords-container">${keywordsHTML}</div>
-          </div>
-          <div style="text-align: center; padding: 20px;">
-            <div style="
-              width: 40px;
-              height: 40px;
-              margin: 0 auto 15px;
-              border: 3px solid #f3f3f3;
-              border-top: 3px solid #3498db;
-              border-radius: 50%;
-              animation: spin 1s linear infinite;
-            "></div>
-            <p style="color: #666;">Generating comprehensive summary...</p>
-          </div>
-          <style>
-            @keyframes spin {
-              0% { transform: rotate(0deg); }
-              100% { transform: rotate(360deg); }
-            }
-          </style>
-        `;
-
-        // Attach event listeners for keywords
-        const keywordTags = contentWrapper.querySelectorAll('.keyword-tag');
-        let activeKeyword = null;
-
-        keywordTags.forEach(tag => {
-          tag.addEventListener('click', () => {
-            const keyword = tag.dataset.keyword;
-            
-            if (activeKeyword === keyword) {
-              activeKeyword = null;
+              activeKeyword = keyword;
               keywordTags.forEach(t => t.classList.remove('active'));
-              return;
-            }
-
-            activeKeyword = keyword;
-            keywordTags.forEach(t => t.classList.remove('active'));
-            tag.classList.add('active');
+              tag.classList.add('active');
+            });
           });
-        });
+        }
       }
 
       // Then try to get AI-enhanced summary

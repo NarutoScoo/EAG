@@ -100,4 +100,10 @@ Webpage Summarizer/
   - Added markdown to HTML conversion
   - Enhanced error handling
   - Modular backend structure
-  - Dynamic model loading 
+  - Dynamic model loading
+
+### Recent Updates
+
+- Enhanced keyword extraction to ensure only terms present in the original text are selected
+- Improved fallback mechanism for keyword generation
+- Added verbatim keyword matching from source text 

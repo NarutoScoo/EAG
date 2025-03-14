@@ -31,6 +31,37 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
       console.error('Background script error:', error);
       return Promise.resolve({ error: error.message });
     }
+  } else if (message.type === 'generate_keywords') {
+    try {
+      const response = await fetch('http://localhost:8050/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ...message.data,
+          format: 'text'  // Request plain text for keywords
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.status === 'error') {
+        return Promise.resolve({ error: data.message });
+      }
+
+      // Send the raw response text back
+      return Promise.resolve({ 
+        success: true,
+        keywords: data.response  // Send the raw response string
+      });
+    } catch (error) {
+      console.error('Background script error:', error);
+      return Promise.resolve({ error: error.message });
+    }
   }
 });
 
