@@ -41,9 +41,15 @@ Webpage Summarizer/
   - Multiple AI provider support:
     - OpenAI (latest GPT-4 and GPT-3.5 models)
     - Ollama (dynamic model loading)
-  - Interactive summary interface with keyword highlighting
-  - Dark mode support
-  - Progressive UI updates with loading indicators
+  - Adaptive UI that matches webpage styles:
+    - Inherits fonts, colors, and text styles
+    - Matches background and heading styles
+    - Maintains visual consistency with the page
+  - Interactive summary interface with:
+    - Keyword highlighting
+    - Resizable side panel
+    - Dark mode support
+    - Progressive UI updates
   - Robust error handling and fallback behavior
   - HTML-formatted summaries with proper markdown rendering
   - Clean text formatting with preserved line breaks
@@ -76,13 +82,15 @@ Webpage Summarizer/
 ## Recent Changes
 
 ### [2024-03-14]
-- Enhanced markdown handling:
-  - Added proper markdown to HTML conversion
-  - Improved formatting of summaries
-  - Added debug logging for troubleshooting
-  - Better error handling for conversion failures
+- Enhanced UI adaptability:
+  - Added automatic style inheritance from webpages
+  - Improved visual consistency with host pages
+  - Better font and color matching
+  - Adaptive heading styles and text properties
 - Previous changes:
+  - Added markdown to HTML conversion
+  - Improved formatting of summaries
+  - Added debug logging
+  - Enhanced error handling
   - Modular backend structure
-  - Enhanced settings UI
-  - Dynamic model loading
-  - Better response handling 
+  - Dynamic model loading 

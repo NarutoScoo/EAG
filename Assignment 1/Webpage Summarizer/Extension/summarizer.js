@@ -361,24 +361,40 @@
     }
   }
 
-  function updateSummaryContent(modal, summary, isLoading = false) {
+  function updateSummaryContent(modal, summary, styles = {}) {
     const contentWrapper = modal.querySelector('div[style*="overflow-y: auto"]');
     if (!contentWrapper) return;
 
+    const {
+      background = 'white',
+      color = '#2c3e50',
+      fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif',
+      fontSize = '14px',
+      lineHeight = '1.5',
+      headingColor = '#34495e',
+      headingFontFamily = fontFamily,
+      headingFontWeight = '600',
+      isPageDark = false
+    } = styles;
+
     // Add loading indicator if needed
-    if (isLoading) {
+    if (summary === null) {
       const loadingHTML = `
         <div style="text-align: center; padding: 20px;">
           <div style="
             width: 40px;
             height: 40px;
             margin: 0 auto 15px;
-            border: 3px solid #f3f3f3;
+            border: 3px solid ${isPageDark ? 'rgba(255,255,255,0.1)' : '#f3f3f3'};
             border-top: 3px solid #3498db;
             border-radius: 50%;
             animation: spin 1s linear infinite;
           "></div>
-          <p style="color: #666;">Generating comprehensive summary...</p>
+          <p style="
+            color: ${color};
+            font-family: ${fontFamily};
+            font-size: ${fontSize};
+          ">Generating comprehensive summary...</p>
         </div>
       `;
       
@@ -403,13 +419,14 @@
             display: inline-block;
             margin: 4px;
             padding: 4px 12px;
-            background: #f8f9fa;
+            background: ${isPageDark ? 'rgba(255,255,255,0.05)' : '#f8f9fa'};
             border-radius: 15px;
-            font-size: 14px;
-            color: #2c3e50;
-            border: 1px solid #e9ecef;
+            font-size: ${fontSize};
+            color: ${color};
+            border: 1px solid ${isPageDark ? 'rgba(255,255,255,0.1)' : '#e9ecef'};
             cursor: pointer;
             transition: all 0.2s ease;
+            font-family: ${fontFamily};
           "
         >${word}</span>
       `)
@@ -418,7 +435,7 @@
     contentWrapper.innerHTML = `
       <style>
         .keyword-tag:hover {
-          background: #e9ecef !important;
+          background: ${isPageDark ? 'rgba(255,255,255,0.1)' : '#e9ecef'} !important;
           transform: translateY(-1px);
         }
         .keyword-tag.active {
@@ -428,32 +445,40 @@
         }
         .content-section {
           transition: all 0.3s ease;
+          font-family: ${fontFamily};
+          font-size: ${fontSize};
+          line-height: ${lineHeight};
+          color: ${color};
         }
         .content-section.highlight {
-          background: #f8f9fa;
+          background: ${isPageDark ? 'rgba(255,255,255,0.05)' : '#f8f9fa'};
           border-radius: 8px;
           padding: 15px;
           margin: -15px;
         }
+        .content-section h3 {
+          color: ${headingColor};
+          font-family: ${headingFontFamily};
+          font-weight: ${headingFontWeight};
+          margin-bottom: 12px;
+        }
       </style>
       <div style="margin-bottom: 25px;">
-        <h3 style="color: #34495e; margin-bottom: 12px;">Key Terms</h3>
+        <h3>Key Terms</h3>
         <div style="line-height: 2;" id="keywords-container">${keywordsHTML}</div>
       </div>
       <div class="content-section" style="margin-bottom: 25px;" data-section="overview">
-        <h3 style="color: #34495e; margin-bottom: 12px;">Overview</h3>
-        <p style="line-height: 1.6; color: #2c3e50;">${summary.overview}</p>
+        <h3>Overview</h3>
+        <p>${summary.overview}</p>
       </div>
       <div class="content-section" style="margin-bottom: 25px;" data-section="keypoints">
-        <h3 style="color: #34495e; margin-bottom: 12px;">Key Points</h3>
+        <h3>Key Points</h3>
         <ul style="list-style-type: none; padding-left: 0; margin: 0;">
           ${summary.keyPoints.map(point => `
             <li style="
               margin-bottom: 12px;
               padding-left: 24px;
               position: relative;
-              line-height: 1.5;
-              color: #2c3e50;
             ">
               <span style="
                 position: absolute;
@@ -470,15 +495,13 @@
         </ul>
       </div>
       <div class="content-section" style="margin-bottom: 20px;" data-section="details">
-        <h3 style="color: #34495e; margin-bottom: 12px;">Important Details</h3>
+        <h3>Important Details</h3>
         <ul style="list-style-type: none; padding-left: 0; margin: 0;">
           ${summary.importantDetails.map(detail => `
             <li style="
               margin-bottom: 12px;
               padding-left: 24px;
               position: relative;
-              line-height: 1.5;
-              color: #2c3e50;
             ">
               <span style="
                 position: absolute;
@@ -541,43 +564,58 @@
       return currentModal;
     }
 
-    // Create backdrop with blur effect
-    const backdrop = document.createElement('div');
-    backdrop.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
-      z-index: 10000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    `;
-
-    // Create modal with dark mode support
-    const modal = document.createElement('div');
+    // Get the webpage's styles
+    const computedStyle = window.getComputedStyle(document.body);
+    const pageBackground = computedStyle.backgroundColor;
+    const pageFontFamily = computedStyle.fontFamily || '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif';
+    const pageFontSize = computedStyle.fontSize || '14px';
+    const pageColor = computedStyle.color;
+    const pageLineHeight = computedStyle.lineHeight;
     const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
-    modal.style.cssText = `
+    // Get heading styles from a sample h2 or h3 element
+    const sampleHeading = document.querySelector('h2, h3');
+    const headingStyles = sampleHeading ? window.getComputedStyle(sampleHeading) : null;
+    const headingColor = headingStyles ? headingStyles.color : (isPageDark ? '#e0e0e0' : '#2c3e50');
+    const headingFontFamily = headingStyles ? headingStyles.fontFamily : pageFontFamily;
+    const headingFontWeight = headingStyles ? headingStyles.fontWeight : '600';
+    
+    // Determine if the page background is dark
+    const bgColor = pageBackground === 'transparent' ? (isDarkMode ? '#1a1a1a' : 'white') : pageBackground;
+    const isPageDark = isColorDark(bgColor);
+    
+    // Create container for the side panel
+    const container = document.createElement('div');
+    container.style.cssText = `
       position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 600px;
-      max-height: 80vh;
-      background: ${isDarkMode ? '#1a1a1a' : 'white'};
-      padding: 0;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-      z-index: 10001;
-      font-family: Arial, sans-serif;
+      top: 0;
+      right: 0;
+      width: 400px;
+      height: 100vh;
+      background: ${bgColor};
+      box-shadow: 
+        -4px 0 25px rgba(0, 0, 0, 0.15),
+        -1px 0 10px rgba(0, 0, 0, 0.1);
+      z-index: 10000;
       display: flex;
       flex-direction: column;
-      color: ${isDarkMode ? '#e0e0e0' : '#2c3e50'};
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      transform: translateX(0);
+      font-family: ${pageFontFamily};
+      font-size: ${pageFontSize};
+      color: ${pageColor};
+      line-height: ${pageLineHeight};
+    `;
+
+    // Create modal with adaptive colors
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      width: 100%;
+      height: 100%;
+      background: ${bgColor};
+      display: flex;
+      flex-direction: column;
+      color: ${pageColor};
     `;
 
     const pageTitle = document.title || 'Current Page';
@@ -587,28 +625,42 @@
     header.style.cssText = `
       position: sticky;
       top: 0;
-      background: ${isDarkMode ? '#2d2d2d' : 'white'};
-      border-bottom: 1px solid ${isDarkMode ? '#404040' : '#eee'};
-      padding: 20px 30px;
-      border-radius: 12px 12px 0 0;
+      background: ${bgColor};
+      border-bottom: 1px solid ${isPageDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
+      padding: 15px 20px;
       z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     `;
-    header.innerHTML = `
-      <h2 style="color: ${isDarkMode ? '#e0e0e0' : '#2c3e50'}; margin: 0; padding-right: 20px;">${pageTitle}</h2>
+    
+    // Title with ellipsis
+    const titleDiv = document.createElement('div');
+    titleDiv.style.cssText = `
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding-right: 10px;
     `;
+    titleDiv.innerHTML = `<h2 style="
+      color: ${headingColor};
+      margin: 0;
+      font-size: ${pageFontSize};
+      font-family: ${headingFontFamily};
+      font-weight: ${headingFontWeight};
+    ">${pageTitle}</h2>`;
+    header.appendChild(titleDiv);
 
-    // Close button inside header
+    // Close button
     const closeButton = document.createElement('button');
     closeButton.textContent = '×';
     closeButton.style.cssText = `
-      position: absolute;
-      top: 15px;
-      right: 15px;
       border: none;
       background: none;
       font-size: 24px;
       cursor: pointer;
-      color: ${isDarkMode ? '#a0a0a0' : '#666'};
+      color: ${isPageDark ? '#a0a0a0' : '#666'};
       padding: 0;
       width: 30px;
       height: 30px;
@@ -617,41 +669,105 @@
       justify-content: center;
       border-radius: 50%;
       transition: all 0.2s ease;
+      flex-shrink: 0;
+      font-family: ${pageFontFamily};
     `;
     closeButton.onmouseover = () => {
-      closeButton.style.backgroundColor = isDarkMode ? '#404040' : '#f0f0f0';
+      closeButton.style.backgroundColor = isPageDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
     };
     closeButton.onmouseout = () => {
       closeButton.style.backgroundColor = 'transparent';
     };
-    closeButton.onclick = () => backdrop.remove();
+    closeButton.onclick = () => {
+      container.style.transform = 'translateX(100%)';
+      container.style.boxShadow = 'none';
+      setTimeout(() => container.remove(), 300);
+    };
     header.appendChild(closeButton);
 
     // Content with scrolling
     const contentWrapper = document.createElement('div');
     contentWrapper.style.cssText = `
-      padding: 20px 30px;
+      padding: 20px;
       overflow-y: auto;
       flex-grow: 1;
-      background: ${isDarkMode ? '#1a1a1a' : 'white'};
+      background: ${bgColor};
+      font-family: ${pageFontFamily};
+      font-size: ${pageFontSize};
+      color: ${pageColor};
+      line-height: ${pageLineHeight};
     `;
 
     modal.appendChild(header);
     modal.appendChild(contentWrapper);
-    backdrop.appendChild(modal);
-    document.body.appendChild(backdrop);
+    container.appendChild(modal);
+    document.body.appendChild(container);
 
-    // Update content
-    updateSummaryContent(modal, summary);
+    // Add resize handle with visual feedback
+    const resizeHandle = document.createElement('div');
+    resizeHandle.style.cssText = `
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 4px;
+      height: 100%;
+      cursor: ew-resize;
+      background: transparent;
+      transition: background 0.2s ease;
+    `;
 
-    // Click outside to dismiss
-    backdrop.onclick = (e) => {
-      if (e.target === backdrop) {
-        backdrop.remove();
+    // Add hover effect for resize handle
+    resizeHandle.addEventListener('mouseover', () => {
+      resizeHandle.style.background = isPageDark ? 
+        'linear-gradient(90deg, rgba(255,255,255,0.1), transparent)' : 
+        'linear-gradient(90deg, rgba(0,0,0,0.05), transparent)';
+    });
+
+    resizeHandle.addEventListener('mouseout', () => {
+      if (!isResizing) {
+        resizeHandle.style.background = 'transparent';
       }
+    });
+
+    container.appendChild(resizeHandle);
+
+    // Pass the styles to updateSummaryContent
+    const styles = {
+      background: bgColor,
+      color: pageColor,
+      fontFamily: pageFontFamily,
+      fontSize: pageFontSize,
+      lineHeight: pageLineHeight,
+      headingColor,
+      headingFontFamily,
+      headingFontWeight,
+      isPageDark
     };
 
+    // Update content with the webpage styles
+    updateSummaryContent(modal, summary, styles);
+
     return modal;
+  }
+
+  // Helper function to determine if a color is dark
+  function isColorDark(color) {
+    // Create a temporary div to parse the color
+    const div = document.createElement('div');
+    div.style.backgroundColor = color;
+    document.body.appendChild(div);
+    const computed = window.getComputedStyle(div);
+    const rgb = computed.backgroundColor;
+    document.body.removeChild(div);
+
+    // Extract RGB values
+    const match = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+    if (!match) return false;
+
+    const [, r, g, b] = match.map(Number);
+    // Calculate relative luminance
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance < 0.5;
   }
 
   async function getPageContent() {
@@ -659,21 +775,17 @@
     
     if (selection) {
       return new Promise((resolve) => {
-        // Create backdrop with blur effect
-        const backdrop = document.createElement('div');
-        backdrop.style.cssText = `
+        // Create side panel for selection choice
+        const container = document.createElement('div');
+        container.style.cssText = `
           position: fixed;
           top: 0;
-          left: 0;
-          width: 100vw;
-          height: 100vh;
-          background: rgba(0, 0, 0, 0.5);
-          backdrop-filter: blur(4px);
-          -webkit-backdrop-filter: blur(4px);
+          right: 0;
+          width: 300px;
+          background: var(--bg-primary);
+          box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
           z-index: 10000;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          transition: transform 0.3s ease;
         `;
 
         // Create modal with dark mode support
@@ -683,10 +795,6 @@
         promptModal.style.cssText = `
           background: ${isDarkMode ? '#1a1a1a' : 'white'};
           padding: 0;
-          border-radius: 8px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-          width: 400px;
-          max-width: 90vw;
           overflow: hidden;
           color: ${isDarkMode ? '#e0e0e0' : '#2c3e50'};
         `;
@@ -698,10 +806,11 @@
             background: ${isDarkMode ? '#2d2d2d' : '#f8f9fa'};
             border-bottom: 1px solid ${isDarkMode ? '#404040' : '#eee'};
             font-weight: bold;
+            font-size: 14px;
           ">${pageTitle}</div>
           <div style="padding: 20px;">
-            <h3 style="margin-top: 0; margin-bottom: 15px;">Summarize</h3>
-            <p style="margin-bottom: 20px; color: ${isDarkMode ? '#a0a0a0' : '#666666'};">
+            <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 16px;">Summarize</h3>
+            <p style="margin-bottom: 20px; color: ${isDarkMode ? '#a0a0a0' : '#666666'}; font-size: 14px;">
               Would you like to summarize the selected text or the entire page?
             </p>
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
@@ -713,6 +822,7 @@
                 border-radius: 4px;
                 cursor: pointer;
                 transition: background 0.2s;
+                font-size: 13px;
               ">Selected Text</button>
               <button id="summarize-page" style="
                 padding: 8px 16px;
@@ -722,30 +832,25 @@
                 border-radius: 4px;
                 cursor: pointer;
                 transition: background 0.2s;
+                font-size: 13px;
               ">Entire Page</button>
             </div>
           </div>
         `;
-
-        // Click outside to dismiss
-        backdrop.onclick = (e) => {
-          if (e.target === backdrop) {
-            backdrop.remove();
-            resolve(document.body.innerText);
-          }
-        };
 
         // Handle button clicks
         const selectionBtn = promptModal.querySelector('#summarize-selection');
         const pageBtn = promptModal.querySelector('#summarize-page');
 
         selectionBtn.onclick = () => {
-          backdrop.remove();
+          container.style.transform = 'translateX(100%)';
+          setTimeout(() => container.remove(), 300);
           resolve(selection);
         };
 
         pageBtn.onclick = () => {
-          backdrop.remove();
+          container.style.transform = 'translateX(100%)';
+          setTimeout(() => container.remove(), 300);
           resolve(document.body.innerText);
         };
 
@@ -759,8 +864,8 @@
           });
         });
 
-        backdrop.appendChild(promptModal);
-        document.body.appendChild(backdrop);
+        container.appendChild(promptModal);
+        document.body.appendChild(container);
       });
     }
     
