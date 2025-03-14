@@ -1,4 +1,4 @@
-# Webpage Summarizer Project
+# Webpage Summarizer
 
 A comprehensive web page summarization solution consisting of a browser extension and a backend service. This project combines local AI capabilities through Ollama with a user-friendly browser interface for efficient webpage content summarization.
 
