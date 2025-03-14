@@ -51,7 +51,8 @@ Webpage Summarizer/
     - Matches background and heading styles
     - Maintains visual consistency with the page
   - Interactive summary interface with:
-    - Keyword highlighting
+    - Instant keyword extraction and display
+    - Keyword highlighting and interaction
     - Resizable side panel
     - Dark mode support
     - Progressive UI updates
@@ -87,11 +88,12 @@ Webpage Summarizer/
 ## Recent Changes
 
 ### [2024-03-14]
-- Enhanced selection dialog:
-  - Added centered modal with backdrop blur
-  - Improved dismissal behavior with click-outside
-  - Added smooth animations and transitions
-  - Better visual hierarchy and focus
+- Enhanced keyword extraction and display:
+  - Immediate keyword display while summary generates
+  - Improved keyword frequency analysis
+  - Better common word filtering
+  - Console logging for keyword debugging
+  - Maintained keyword highlighting during summary update
 - Previous changes:
   - Added automatic style inheritance
   - Improved visual consistency

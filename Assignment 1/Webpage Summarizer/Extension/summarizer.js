@@ -53,16 +53,93 @@
 
   async function summarizeText(text) {
     try {
-      // First, get the basic summary
+      // First, get the basic summary and show keywords immediately
       const basicSummary = await basicSummarize(text);
       
       // Show the basic summary immediately
       currentModal = await showSummary(basicSummary);
 
-      // Show only loading state for AI summary (without basic summary)
+      // Extract keywords from the text immediately
+      const words = text.toLowerCase().match(/\b\w+\b/g) || [];
+      const commonWords = new Set([
+        'this', 'that', 'these', 'those', 'then', 'than', 'with', 'will', 
+        'have', 'from', 'what', 'when', 'where', 'which', 'there', 'their', 
+        'about', 'would', 'could', 'should', 'and', 'the', 'for', 'are', 
+        'was', 'were', 'been', 'being', 'has', 'had', 'does', 'did', 'doing',
+        'can', 'may', 'might', 'must', 'shall', 'into', 'onto', 'upon',
+        'while', 'within', 'without', 'through', 'during', 'before', 'after',
+        'above', 'below', 'over', 'under', 'again', 'once', 'all', 'any',
+        'both', 'each', 'more', 'most', 'other', 'some', 'such'
+      ]);
+
+      const wordFreq = {};
+      words.forEach(word => {
+        if (word.length > 3 && !commonWords.has(word)) {
+          wordFreq[word] = (wordFreq[word] || 0) + 1;
+        }
+      });
+
+      const initialKeywords = Object.entries(wordFreq)
+        .filter(([_, freq]) => freq >= 2)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 8)
+        .map(([word, freq]) => ({
+          word,
+          frequency: freq
+        }));
+
+      // Log the initial keywords
+      console.log('Initial Keywords:', initialKeywords.map(k => `${k.word} (${k.frequency})`));
+
+      // Update UI with initial keywords and loading state
       const contentWrapper = currentModal.querySelector('div[style*="overflow-y: auto"]');
       if (contentWrapper) {
+        const keywordsHTML = initialKeywords
+          .map(({word, frequency}) => `
+            <span 
+              class="keyword-tag"
+              data-keyword="${word.toLowerCase()}"
+              style="
+                display: inline-block;
+                margin: 4px;
+                padding: 4px 12px;
+                background: #f8f9fa;
+                border-radius: 15px;
+                font-size: 14px;
+                color: #2c3e50;
+                border: 1px solid #e9ecef;
+                cursor: pointer;
+                transition: all 0.2s ease;
+              "
+            >${word}</span>
+          `)
+          .join('');
+
         contentWrapper.innerHTML = `
+          <style>
+            .keyword-tag:hover {
+              background: #e9ecef !important;
+              transform: translateY(-1px);
+            }
+            .keyword-tag.active {
+              background: #3498db !important;
+              color: white !important;
+              border-color: #3498db !important;
+            }
+            .content-section {
+              transition: all 0.3s ease;
+            }
+            .content-section.highlight {
+              background: #f8f9fa;
+              border-radius: 8px;
+              padding: 15px;
+              margin: -15px;
+            }
+          </style>
+          <div style="margin-bottom: 25px;">
+            <h3 style="color: #34495e; margin-bottom: 12px;">Key Terms</h3>
+            <div style="line-height: 2;" id="keywords-container">${keywordsHTML}</div>
+          </div>
           <div style="text-align: center; padding: 20px;">
             <div style="
               width: 40px;
@@ -82,6 +159,26 @@
             }
           </style>
         `;
+
+        // Attach event listeners for keywords
+        const keywordTags = contentWrapper.querySelectorAll('.keyword-tag');
+        let activeKeyword = null;
+
+        keywordTags.forEach(tag => {
+          tag.addEventListener('click', () => {
+            const keyword = tag.dataset.keyword;
+            
+            if (activeKeyword === keyword) {
+              activeKeyword = null;
+              keywordTags.forEach(t => t.classList.remove('active'));
+              return;
+            }
+
+            activeKeyword = keyword;
+            keywordTags.forEach(t => t.classList.remove('active'));
+            tag.classList.add('active');
+          });
+        });
       }
 
       // Then try to get AI-enhanced summary
@@ -184,53 +281,12 @@
 
             // If we got a response, update the UI immediately with the raw AI response
             if (aiSummary && currentModal) {
-              // Process the AI text for keywords
-              const words = aiSummary.toLowerCase().match(/\b\w+\b/g) || [];
-              const commonWords = new Set(['this', 'that', 'these', 'those', 'then', 'than', 'with', 'will', 'have', 'from', 'what', 'when', 'where', 'which', 'there', 'their', 'about', 'would', 'could', 'should']);
-              const wordFreq = {};
-              words.forEach(word => {
-                if (word.length > 3 && !commonWords.has(word)) {
-                  wordFreq[word] = (wordFreq[word] || 0) + 1;
-                }
-              });
-
-              const aiKeywords = Object.entries(wordFreq)
-                .filter(([_, freq]) => freq >= 2)
-                .sort(([,a], [,b]) => b - a)
-                .slice(0, 8)
-                .map(([word, freq]) => ({
-                  word,
-                  frequency: freq
-                }));
-
-              console.log('Extracted Keywords:', aiKeywords);
-
-              // Update the UI with the AI response and keywords
+              // Update the UI with the AI response, keeping the existing keywords
               const contentWrapper = currentModal.querySelector('div[style*="overflow-y: auto"]');
 
               if (contentWrapper) {
-                const keywordsHTML = aiKeywords
-                  .map(({word, frequency}) => `
-                    <span 
-                      class="keyword-tag"
-                      data-keyword="${word.toLowerCase()}"
-                      style="
-                        display: inline-block;
-                        margin: 4px;
-                        padding: 4px 12px;
-                        background: #f8f9fa;
-                        border-radius: 15px;
-                        font-size: 14px;
-                        color: #2c3e50;
-                        border: 1px solid #e9ecef;
-                        cursor: pointer;
-                        transition: all 0.2s ease;
-                      "
-                    >${word}</span>
-                  `)
-                  .join('');
-
-                // Create the new content with HTML formatting
+                // Keep the existing keywords section and update only the summary content
+                const keywordsSection = contentWrapper.querySelector('#keywords-container').parentElement;
                 const newContent = `
                   <style>
                     .keyword-tag:hover {
@@ -279,16 +335,19 @@
                       overflow-x: auto;
                     }
                   </style>
-                  <div style="margin-bottom: 25px;">
-                    <h3 style="color: #34495e; margin-bottom: 12px;">Key Terms</h3>
-                    <div style="line-height: 2;" id="keywords-container">${keywordsHTML}</div>
-                  </div>
                   <div class="content-section" style="margin-bottom: 25px;" data-section="summary">
                     <div class="summary-text">${aiSummary}</div>
                   </div>
                 `;
 
-                contentWrapper.innerHTML = newContent;
+                // Replace everything after the keywords section
+                keywordsSection.insertAdjacentHTML('afterend', newContent);
+
+                // Remove the loading spinner if it exists
+                const loadingSpinner = contentWrapper.querySelector('div[style*="text-align: center"]');
+                if (loadingSpinner) {
+                  loadingSpinner.remove();
+                }
 
                 // Reattach event listeners for keywords
                 const keywordTags = contentWrapper.querySelectorAll('.keyword-tag');
@@ -327,8 +386,6 @@
                     });
                   });
                 });
-              } else {
-                console.error('Content wrapper not found in modal');
               }
             } else {
               console.error('No AI summary or modal not available:', { 

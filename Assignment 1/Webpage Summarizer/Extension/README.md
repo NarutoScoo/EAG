@@ -1,116 +1,108 @@
 # Webpage Summarizer Extension
 
-A Firefox browser extension that provides intelligent webpage summarization using either OpenAI's GPT models or local Ollama models.
+A Firefox browser extension that provides intelligent webpage summarization with a focus on user experience and visual integration.
 
 ## Features
 
-### Summarization
-- Summarize entire webpages or selected text
-- Multiple AI provider support:
-  - OpenAI (GPT-4 and GPT-3.5)
-  - Ollama (local models)
-- Intelligent keyword extraction
-- Important details highlighting
-- Key points identification
+### Summarization Capabilities
+- Full webpage summarization
+- Selected text summarization
+- AI-powered content analysis
+- Key points extraction
+- Important details identification
 
 ### User Interface
-- Enhanced selection dialog:
-  - Centered modal with backdrop blur
-  - Click-outside dismissal
-  - Smooth animations and transitions
-  - Clear visual hierarchy
-  - Dark mode support
 - Adaptive styling that matches webpage design:
-  - Inherits webpage's font family and size
-  - Matches text colors and styles
-  - Adapts heading styles for consistency
-  - Uses webpage's background color
-  - Maintains visual harmony with the host page
-- Side panel display with:
-  - Resizable width (drag handle)
+  - Inherits webpage fonts and colors
+  - Adjusts to dark/light modes
+  - Maintains visual consistency
+- Interactive side panel:
+  - Resizable width
   - Smooth animations
-  - Clear visual separation
-  - Proper shadow effects
-- Interactive elements:
-  - Clickable keywords for highlighting
+  - Keyboard shortcuts
+  - Click-outside dismissal
+
+### Keyword Features
+- Instant keyword extraction:
+  - Shows keywords immediately while summary generates
+  - Frequency-based analysis
+  - Intelligent common word filtering
+  - Console logging for debugging
+- Interactive keyword system:
+  - Click to highlight occurrences
+  - Visual feedback on interaction
+  - Maintained during summary updates
   - Smooth scrolling to matches
-  - Hover effects for better UX
-- Loading indicators
-- Clean, modern design
 
 ### Technical Features
-- HTML-formatted summaries
-- Markdown rendering support
-- Error handling with fallbacks
-- Debug logging
-- Cross-origin request handling
-- Dynamic model loading
-- Settings persistence
+- Multiple AI provider support:
+  - OpenAI integration (GPT-4, GPT-3.5)
+  - Local Ollama support
+  - Automatic fallback handling
+- Progressive enhancement:
+  - Initial quick summary
+  - Asynchronous AI enhancement
+  - Maintained interactivity
+- Robust error handling:
+  - Graceful degradation
+  - Clear error messages
+  - Automatic retries
+- Performance optimizations:
+  - Efficient DOM updates
+  - Smooth animations
+  - Resource cleanup
 
 ## Installation
 
-1. Load the extension in Firefox:
-   - Open `about:debugging`
-   - Click "This Firefox"
-   - Click "Load Temporary Add-on"
-   - Select the `manifest.json` file
+1. Download or clone the repository
+2. Open Firefox and navigate to `about:debugging`
+3. Click "This Firefox" in the left sidebar
+4. Click "Load Temporary Add-on"
+5. Select the `manifest.json` file from the Extension directory
 
-2. Configure the extension:
-   - Click the extension icon
-   - Open settings
-   - Choose AI provider (OpenAI or Ollama)
-   - Configure API settings
+## Configuration
+
+1. Click the extension icon to access settings
+2. Choose your preferred AI provider:
+   - OpenAI: Enter your API key
+   - Ollama: Configure local instance URL
+3. Select preferred model and options
+4. Save settings
 
 ## Usage
 
 1. Select text on any webpage (optional)
-2. Right-click to open the context menu
-3. Choose "Summarize" from the context menu
-4. If text is selected:
-   - A centered modal appears with options
+2. Right-click and choose "Summarize" or use keyboard shortcut
+3. For selected text:
    - Choose between summarizing selection or full page
-   - Click outside to dismiss if needed
-5. View the summary in the adaptive side panel
-6. Use keywords to highlight relevant content
-7. Resize the panel as needed
-8. Close with the × button when done
+   - View keywords immediately while summary generates
+   - Interact with keywords to highlight content
+4. View the generated summary in the side panel
+5. Click keywords to highlight relevant content
+6. Resize panel as needed
+7. Close with 'X' or click outside
 
 ## Development
 
-The extension consists of several key files:
-- `manifest.json`: Extension configuration
-- `summarizer.js`: Main content script
-- `background.js`: Background service worker
-- `options.js`: Settings management
-- `options.html`: Settings UI
-
-### Building
-
-No build step required. The extension can be loaded directly into Firefox.
-
-### Testing
-
-1. Make changes to the code
-2. Reload the extension in `about:debugging`
-3. Test on various websites to ensure:
-   - Selection dialog appears centered
-   - Backdrop blur works correctly
-   - Click-outside dismissal functions
-   - Animations are smooth
-   - Style adaptation works
-   - Dark mode compatibility
-4. Check error handling scenarios
+- Built with vanilla JavaScript
+- Uses browser extension APIs
+- Modular code organization
+- Clear separation of concerns
+- Extensive error handling
+- Progressive enhancement pattern
 
 ## Recent Changes
 
 ### [2024-03-14]
-- Enhanced settings interface:
-  - Dynamic Ollama model loading
-  - Updated OpenAI model list
-  - Real-time model refresh
-  - Improved visual feedback
-  - Better error handling
+- Enhanced keyword system:
+  - Immediate keyword display while waiting for summary
+  - Improved frequency-based extraction
+  - Better common word filtering
+  - Added console logging for debugging
+  - Maintained keyword state during updates
 - Previous updates:
-  - Improved text display
+  - Added adaptive styling
+  - Improved visual consistency
   - Enhanced error handling
-  - Better response validation 
+  - Added keyboard shortcuts
+  - Improved animation system 
