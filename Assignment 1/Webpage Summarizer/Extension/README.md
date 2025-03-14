@@ -127,3 +127,9 @@ A Firefox browser extension that provides intelligent webpage summarization with
 - Enhanced error handling
 - Added keyboard shortcuts
 - Improved animation system 
+
+## Changelog
+
+### Latest Changes
+- Fixed title wrapping in the summary panel to properly handle long page titles
+- Added comprehensive text wrapping properties to ensure proper title display 

@@ -985,9 +985,7 @@
     const titleDiv = document.createElement('div');
     titleDiv.style.cssText = `
       flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      min-width: 0;
       padding-right: 10px;
     `;
     titleDiv.innerHTML = `<h2 style="
@@ -996,6 +994,11 @@
       font-size: ${pageFontSize};
       font-family: ${headingFontFamily};
       font-weight: ${headingFontWeight};
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      word-break: break-word;
+      hyphens: auto;
+      white-space: normal;
     ">${pageTitle}</h2>`;
     header.appendChild(titleDiv);
 
@@ -1093,6 +1096,14 @@
 
     // Update content with the webpage styles
     updateSummaryContent(modal, summary, styles);
+
+    // Find and update or add the title element styling
+    const titleElement = header.querySelector('h2');
+    if (titleElement) {
+      titleElement.style.wordWrap = 'break-word';
+      titleElement.style.overflowWrap = 'break-word';
+      titleElement.style.maxWidth = '100%';
+    }
 
     return modal;
   }

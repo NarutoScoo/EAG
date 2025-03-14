@@ -113,4 +113,10 @@ Webpage Summarizer/
 ### Features
 - Enhanced keyword extraction to ensure only terms present in the original text are selected
 - Improved fallback mechanism for keyword generation
-- Added verbatim keyword matching from source text 
+- Added verbatim keyword matching from source text
+
+## Changelog
+
+### Latest Updates
+- Fixed UI issue: Long page titles now properly wrap in the summary panel
+- Enhanced text wrapping properties for better title display and readability 
