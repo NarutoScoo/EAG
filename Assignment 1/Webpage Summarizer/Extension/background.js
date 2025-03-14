@@ -7,7 +7,10 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(message.data)
+        body: JSON.stringify({
+          ...message.data,
+          format: 'html'  // Always request HTML format
+        })
       });
 
       if (!response.ok) {

@@ -1,6 +1,8 @@
 dash==2.14.2
+flask==3.0.2
+flask-cors==4.0.0
 requests==2.31.0
+python-dotenv==1.0.1
 dash-mantine-components==0.12.1
 dash-iconify==0.1.2
-flask-cors==4.0.0
-markdown2==2.4.12 
+markdown>=3.5.2 

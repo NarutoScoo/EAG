@@ -11,7 +11,7 @@ from api_routes import register_routes
 
 # Set up logging with a cleaner format
 logging.basicConfig(
-    level=logging.DEBUG,  # Set to INFO in production
+    level=logging.INFO,  # Set to INFO in production
     format='%(asctime)s - %(levelname)s: %(message)s',
     datefmt='%H:%M:%S'
 )

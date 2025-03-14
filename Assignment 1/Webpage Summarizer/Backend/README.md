@@ -19,14 +19,16 @@ Backend/
 - Main application configuration
 - Server setup and CORS handling
 - Dash initialization
-- Debug logging configuration
+- Base logging configuration
 - Route registration
 
 ### api_routes.py
 - REST API endpoint definitions
 - Request validation
 - Response formatting
+- Markdown to HTML conversion
 - Error handling
+- Debug logging support
 - CORS configuration
 
 ### llm_service.py
@@ -49,7 +51,8 @@ Backend/
 - REST API for external integration
 - Support for multiple LLM models
 - Temperature control for responses
-- Debug logging for development
+- Markdown/HTML response formats
+- Structured logging system
 - CORS support for cross-origin requests
 - Error handling and validation
 - Clean separation of concerns
@@ -61,7 +64,16 @@ Backend/
   - Parameters:
     - model: LLM model to use
     - prompt: Text to summarize
-    - temperature: Response randomness
+    - temperature: Response randomness (0.0-1.0)
+    - format: Response format ('markdown' or 'html', default: 'markdown')
+  - Response:
+    ```json
+    {
+      "status": "success",
+      "response": "Generated text in specified format",
+      "format": "markdown|html"
+    }
+    ```
 
 ## Setup
 
@@ -81,23 +93,21 @@ Backend/
 
 ## Development
 
-- Set logging level in app.py for debugging
+- Set logging level in app.py for production
 - Add new routes in api_routes.py
 - Extend LLM functionality in llm_service.py
 - Modify UI components in ui_components.py
+- Debug logging available for troubleshooting
 
 ## Recent Changes
 
-### [2024-03-13]
-- Modular code organization
-  - Split functionality into logical modules
-  - Better separation of concerns
-  - Improved maintainability
-- Enhanced logging
-  - Added debug logging
-  - Better error tracking
-  - Improved development experience
-- Improved error handling
-  - Better validation
-  - Clearer error messages
-  - Robust API responses 
+### [2024-03-14]
+- Added markdown to HTML conversion:
+  - Support for markdown and HTML output formats
+  - Automatic conversion with error handling
+  - Debug logging for troubleshooting
+  - Format specification in response
+- Previous changes:
+  - Modular code organization
+  - Enhanced logging
+  - Improved error handling 

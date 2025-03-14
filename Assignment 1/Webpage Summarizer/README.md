@@ -29,7 +29,8 @@ Webpage Summarizer/
   - Temperature control for responses
   - REST API endpoints for external access
   - CORS support for cross-origin requests
-  - Debug logging for development
+  - Markdown to HTML conversion
+  - Structured logging system
   - Modular code organization
 
 ### Browser Extension
@@ -44,7 +45,7 @@ Webpage Summarizer/
   - Dark mode support
   - Progressive UI updates with loading indicators
   - Robust error handling and fallback behavior
-  - Keyword extraction and interactive highlighting
+  - HTML-formatted summaries with proper markdown rendering
   - Clean text formatting with preserved line breaks
   - Simplified UI with neutral terminology
   - Dynamic settings management
@@ -75,13 +76,13 @@ Webpage Summarizer/
 ## Recent Changes
 
 ### [2024-03-14]
-- Enhanced extension settings:
-  - Dynamic Ollama model loading
-  - Updated OpenAI model list
-  - Improved settings UI with better feedback
-  - Real-time model refresh capability
+- Enhanced markdown handling:
+  - Added proper markdown to HTML conversion
+  - Improved formatting of summaries
+  - Added debug logging for troubleshooting
+  - Better error handling for conversion failures
 - Previous changes:
   - Modular backend structure
-  - Improved error handling
-  - Enhanced UI/UX
+  - Enhanced settings UI
+  - Dynamic model loading
   - Better response handling 

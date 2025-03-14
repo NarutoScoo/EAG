@@ -152,7 +152,10 @@
                   'Content-Type': 'application/json',
                   'Origin': 'moz-extension://' + browser.runtime.id
                 },
-                body: JSON.stringify(message.data)
+                body: JSON.stringify({
+                  ...message.data,
+                  format: 'html'  // Request HTML formatted output
+                })
               });
 
               if (!response.ok) {
@@ -227,7 +230,7 @@
                   `)
                   .join('');
 
-                // Create the new content with simple text formatting
+                // Create the new content with HTML formatting
                 const newContent = `
                   <style>
                     .keyword-tag:hover {
@@ -251,7 +254,29 @@
                     .summary-text {
                       color: #2c3e50;
                       line-height: 1.6;
-                      white-space: pre-wrap;
+                    }
+                    .summary-text h1, .summary-text h2, .summary-text h3 {
+                      color: #34495e;
+                      margin: 1em 0 0.5em;
+                    }
+                    .summary-text ul, .summary-text ol {
+                      padding-left: 1.5em;
+                      margin: 0.5em 0;
+                    }
+                    .summary-text p {
+                      margin: 0.5em 0;
+                    }
+                    .summary-text code {
+                      background: #f8f9fa;
+                      padding: 0.2em 0.4em;
+                      border-radius: 3px;
+                      font-family: monospace;
+                    }
+                    .summary-text pre {
+                      background: #f8f9fa;
+                      padding: 1em;
+                      border-radius: 5px;
+                      overflow-x: auto;
                     }
                   </style>
                   <div style="margin-bottom: 25px;">
