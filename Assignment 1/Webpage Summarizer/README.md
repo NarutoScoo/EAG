@@ -102,8 +102,15 @@ Webpage Summarizer/
   - Modular backend structure
   - Dynamic model loading
 
-### Recent Updates
+### UI/UX Improvements
+- Enhanced keyword highlighting visibility:
+  - Increased background contrast (20% opacity in dark mode, 12% in light mode)
+  - Added subtle border for visual depth
+  - Improved text emphasis with medium font weight
+  - Increased padding for better readability
+  - Maintains theme consistency across modes
 
+### Features
 - Enhanced keyword extraction to ensure only terms present in the original text are selected
 - Improved fallback mechanism for keyword generation
 - Added verbatim keyword matching from source text 

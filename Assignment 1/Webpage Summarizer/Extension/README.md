@@ -110,3 +110,20 @@ A Firefox browser extension that provides intelligent webpage summarization with
 - Extracts keywords using two methods:
   1. LLM-based extraction (primary): Uses AI to identify key terms that appear verbatim in the text
   2. Frequency-based extraction (fallback): Analyzes word frequency and filters common words 
+
+## Recent Updates
+
+### Visual Improvements
+- Enhanced keyword highlighting with improved visibility:
+  - Increased background opacity for better contrast
+  - Added subtle border for depth
+  - Improved padding and border radius
+  - Added font weight emphasis
+  - Maintains theme consistency in both light and dark modes
+
+### Features
+- Added adaptive styling
+- Improved visual consistency
+- Enhanced error handling
+- Added keyboard shortcuts
+- Improved animation system 

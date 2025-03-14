@@ -57,14 +57,11 @@
     }
   }
 
-  async function basicSummarize(text) {
-    // Split text into paragraphs and sentences
-    const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
-    
-    // Extract main topics (using keywords frequency)
+  function getFrequencyKeywords(text) {
     const words = text.toLowerCase().match(/\b\w+\b/g) || [];
     const commonWords = new Set(['this', 'that', 'these', 'those', 'then', 'than', 'with', 'will', 'have', 'from', 'what', 'when', 'where', 'which', 'there', 'their', 'about', 'would', 'could', 'should']);
     const wordFreq = {};
+    
     words.forEach(word => {
       if (word.length > 3 && !commonWords.has(word)) {
         wordFreq[word] = (wordFreq[word] || 0) + 1;
@@ -72,7 +69,7 @@
     });
 
     // Get meaningful keywords
-    const keywords = Object.entries(wordFreq)
+    return Object.entries(wordFreq)
       .filter(([_, freq]) => freq >= 2)
       .sort(([,a], [,b]) => b - a)
       .slice(0, 8)
@@ -80,13 +77,15 @@
         word,
         frequency: freq
       }));
+  }
 
+  async function basicSummarize(text) {
+    // Split text into paragraphs and sentences
+    const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
+    
     // Create sections for the summary
     const mainPoints = sentences
-      .filter(sentence => {
-        return keywords.some(({word}) => sentence.toLowerCase().includes(word)) ||
-               sentence.length > 100;
-      })
+      .filter(sentence => sentence.length > 100)
       .slice(0, 8);
 
     // Find potential key details (dates, numbers, names)
@@ -95,16 +94,22 @@
     }).slice(0, 5);
 
     return {
-      keywords: keywords,
       overview: mainPoints.slice(0, 2).join(' '),
       keyPoints: mainPoints.slice(2).map(point => point.trim()),
       importantDetails: details.map(detail => detail.trim())
     };
   }
 
-  function highlightText(text, keyword) {
+  function highlightText(text, keyword, isPageDark) {
     const regex = new RegExp(`(${keyword})`, 'gi');
-    return text.replace(regex, '<mark style="background-color: #fff3cd; padding: 2px 4px; border-radius: 2px;">$1</mark>');
+    return text.replace(regex, `<mark style="
+      background-color: ${isPageDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.12)'};
+      color: ${isPageDark ? '#fff' : '#000'};
+      padding: 2px 6px;
+      border-radius: 3px;
+      border: 1px solid ${isPageDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)'};
+      font-weight: 500;
+    ">$1</mark>`);
   }
 
   async function summarizeText(text) {
@@ -116,11 +121,10 @@
       let keywords = await getLLMKeywords(text);
       console.log('LLM keyword generation:', keywords ? 'success' : 'failed');
 
-      // If LLM keywords failed, get frequency-based keywords
+      // If LLM keywords failed, use frequency-based keywords
       if (!keywords) {
         console.log('Falling back to frequency-based keywords');
-        const basicSummary = await basicSummarize(text);
-        keywords = basicSummary.keywords;
+        keywords = getFrequencyKeywords(text);
       }
       
       // Create initial summary with the keywords
@@ -135,42 +139,133 @@
       if (currentModal) {
         const contentWrapper = currentModal.querySelector('div[style*="overflow-y: auto"]');
         if (contentWrapper) {
+          // Get the webpage's dark mode state
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          const computedStyle = window.getComputedStyle(document.body);
+          const pageBackground = computedStyle.backgroundColor;
+          const bgColor = pageBackground === 'transparent' ? (isDarkMode ? '#1a1a1a' : 'white') : pageBackground;
+          const isPageDark = isColorDark(bgColor);
+          const fontSize = computedStyle.fontSize || '14px';
+          const fontFamily = computedStyle.fontFamily || '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif';
+          const color = computedStyle.color;
+          const lineHeight = computedStyle.lineHeight || '1.5';
+          
+          // Get heading styles
+          const sampleHeading = document.querySelector('h2, h3');
+          const headingStyles = sampleHeading ? window.getComputedStyle(sampleHeading) : null;
+          const headingColor = headingStyles ? headingStyles.color : (isPageDark ? '#e0e0e0' : '#2c3e50');
+          const headingFontFamily = headingStyles ? headingStyles.fontFamily : fontFamily;
+          const headingFontWeight = headingStyles ? headingStyles.fontWeight : '600';
+
           const keywordsHTML = keywords
-            .map(({word, frequency}) => `
+            .map(({word, frequency}, index) => `
               <span 
-                class="keyword-tag"
+                class="keyword-tag ${index >= 5 ? 'hidden-keyword' : ''}"
                 data-keyword="${word.toLowerCase()}"
                 style="
-                  display: inline-block;
+                  display: ${index >= 5 ? 'none' : 'inline-block'};
                   margin: 4px;
                   padding: 4px 12px;
-                  background: #f8f9fa;
+                  background: ${isPageDark ? 'rgba(255,255,255,0.05)' : '#f8f9fa'};
                   border-radius: 15px;
-                  font-size: 14px;
-                  color: #2c3e50;
-                  border: 1px solid #e9ecef;
+                  font-size: ${fontSize};
+                  color: ${color};
+                  border: 1px solid ${isPageDark ? 'rgba(255,255,255,0.1)' : '#e9ecef'};
                   cursor: pointer;
                   transition: all 0.2s ease;
+                  font-family: ${fontFamily};
                 "
               >${word}</span>
             `)
             .join('');
 
+          const showMoreButton = keywords.length > 5 ? `
+            <div
+              id="toggle-keywords"
+              style="
+                display: flex;
+                align-items: center;
+                margin: 12px 0;
+                cursor: pointer;
+                transition: all 0.2s ease;
+              "
+            >
+              <div class="toggle-line" style="flex-grow: 1; height: 1px; background: ${isPageDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}; transition: background 0.2s ease;"></div>
+              <div class="toggle-text" style="
+                padding: 0 12px;
+                font-size: 12px;
+                color: ${isPageDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)'};
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                transition: color 0.2s ease;
+              ">
+                <span>Show More</span>
+                <span style="
+                  display: inline-block;
+                  transform: rotate(90deg);
+                  transition: transform 0.3s ease;
+                ">›</span>
+              </div>
+              <div class="toggle-line" style="flex-grow: 1; height: 1px; background: ${isPageDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}; transition: background 0.2s ease;"></div>
+            </div>
+          ` : '';
+
           contentWrapper.innerHTML = `
             <style>
               .keyword-tag:hover {
-                background: #e9ecef !important;
+                background: ${isPageDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'} !important;
                 transform: translateY(-1px);
               }
               .keyword-tag.active {
-                background: #3498db !important;
-                color: white !important;
-                border-color: #3498db !important;
+                background: ${isPageDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'} !important;
+                color: ${isPageDark ? '#fff' : '#000'} !important;
+                border-color: ${isPageDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)'} !important;
+                font-weight: 500;
+              }
+              .content-section {
+                transition: all 0.3s ease;
+                font-family: ${fontFamily};
+                font-size: ${fontSize};
+                line-height: ${lineHeight};
+                color: ${color};
+              }
+              .content-section.highlight {
+                background: ${isPageDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)'};
+                border-radius: 8px;
+                padding: 15px;
+                margin: -15px;
+              }
+              .content-section h3 {
+                color: ${headingColor};
+                font-family: ${headingFontFamily};
+                font-weight: ${headingFontWeight};
+                margin-bottom: 12px;
+              }
+              #toggle-keywords:hover {
+                opacity: 0.8;
+              }
+              #toggle-keywords:hover .toggle-line {
+                background: ${isPageDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)'};
+              }
+              #toggle-keywords:hover .toggle-text {
+                color: ${isPageDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.8)'};
+              }
+              mark {
+                background-color: ${isPageDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.12)'} !important;
+                color: ${isPageDark ? '#fff' : '#000'} !important;
+                padding: 2px 6px !important;
+                border-radius: 3px !important;
+                border: 1px solid ${isPageDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)'} !important;
+                font-weight: 500 !important;
               }
             </style>
             <div style="margin-bottom: 25px;">
-              <h3 style="color: #34495e; margin-bottom: 12px;">Key Terms</h3>
-              <div style="line-height: 2;" id="keywords-container">${keywordsHTML}</div>
+              <h3>Key Terms</h3>
+              <div style="line-height: 2;" id="keywords-container">
+                ${keywordsHTML}
+                ${showMoreButton}
+              </div>
             </div>
             <div style="text-align: center; padding: 20px;">
               <div style="
@@ -192,9 +287,38 @@
             </style>
           `;
 
-          // Attach event listeners for keywords
+          // Attach event listeners for keywords and toggle button
           const keywordTags = contentWrapper.querySelectorAll('.keyword-tag');
+          const contentSections = contentWrapper.querySelectorAll('.content-section');
+          const toggleButton = contentWrapper.querySelector('#toggle-keywords');
           let activeKeyword = null;
+          let isExpanded = false;
+
+          if (toggleButton) {
+            toggleButton.addEventListener('click', () => {
+              const hiddenKeywords = contentWrapper.querySelectorAll('.hidden-keyword');
+              isExpanded = !isExpanded;
+              
+              hiddenKeywords.forEach(keyword => {
+                keyword.style.display = isExpanded ? 'inline-block' : 'none';
+              });
+              
+              const arrow = toggleButton.querySelector('span:last-child');
+              const text = toggleButton.querySelector('span:first-child');
+              arrow.style.transform = isExpanded ? 'rotate(270deg)' : 'rotate(90deg)';
+              text.textContent = isExpanded ? 'Show Less' : 'Show More';
+              
+              toggleButton.style.opacity = '1';
+            });
+
+            toggleButton.addEventListener('mouseover', () => {
+              toggleButton.style.opacity = '0.8';
+            });
+
+            toggleButton.addEventListener('mouseout', () => {
+              toggleButton.style.opacity = '1';
+            });
+          }
 
           keywordTags.forEach(tag => {
             tag.addEventListener('click', () => {
@@ -203,12 +327,29 @@
               if (activeKeyword === keyword) {
                 activeKeyword = null;
                 keywordTags.forEach(t => t.classList.remove('active'));
+                contentSections.forEach(section => {
+                  section.classList.remove('highlight');
+                  section.innerHTML = section.innerHTML.replace(/<mark[^>]*>(.*?)<\/mark>/g, '$1');
+                });
                 return;
               }
 
               activeKeyword = keyword;
               keywordTags.forEach(t => t.classList.remove('active'));
               tag.classList.add('active');
+
+              contentSections.forEach(section => {
+                const originalContent = section.innerHTML.replace(/<mark[^>]*>(.*?)<\/mark>/g, '$1');
+                const hasMatch = originalContent.toLowerCase().includes(keyword);
+                
+                section.classList.toggle('highlight', hasMatch);
+                if (hasMatch) {
+                  section.innerHTML = highlightText(originalContent, keyword, isPageDark);
+                  section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
+                  section.innerHTML = originalContent;
+                }
+              });
             });
           });
         }
@@ -318,34 +459,45 @@
               const contentWrapper = currentModal.querySelector('div[style*="overflow-y: auto"]');
 
               if (contentWrapper) {
+                // Get the webpage's dark mode state again to ensure it's in scope
+                const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const computedStyle = window.getComputedStyle(document.body);
+                const pageBackground = computedStyle.backgroundColor;
+                const bgColor = pageBackground === 'transparent' ? (isDarkMode ? '#1a1a1a' : 'white') : pageBackground;
+                const isPageDark = isColorDark(bgColor);
+                const color = computedStyle.color;
+                const headingStyles = document.querySelector('h2, h3') ? window.getComputedStyle(document.querySelector('h2, h3')) : null;
+                const headingColor = headingStyles ? headingStyles.color : (isPageDark ? '#e0e0e0' : '#2c3e50');
+
                 // Keep the existing keywords section and update only the summary content
                 const keywordsSection = contentWrapper.querySelector('#keywords-container').parentElement;
                 const newContent = `
                   <style>
                     .keyword-tag:hover {
-                      background: #e9ecef !important;
+                      background: ${isPageDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'} !important;
                       transform: translateY(-1px);
                     }
                     .keyword-tag.active {
-                      background: #3498db !important;
-                      color: white !important;
-                      border-color: #3498db !important;
+                      background: ${isPageDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'} !important;
+                      color: ${isPageDark ? '#fff' : '#000'} !important;
+                      border-color: ${isPageDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)'} !important;
+                      font-weight: 500;
                     }
                     .content-section {
                       transition: all 0.3s ease;
                     }
                     .content-section.highlight {
-                      background: #f8f9fa;
+                      background: ${isPageDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)'};
                       border-radius: 8px;
                       padding: 15px;
                       margin: -15px;
                     }
                     .summary-text {
-                      color: #2c3e50;
+                      color: ${color};
                       line-height: 1.6;
                     }
                     .summary-text h1, .summary-text h2, .summary-text h3 {
-                      color: #34495e;
+                      color: ${headingColor};
                       margin: 1em 0 0.5em;
                     }
                     .summary-text ul, .summary-text ol {
@@ -356,16 +508,24 @@
                       margin: 0.5em 0;
                     }
                     .summary-text code {
-                      background: #f8f9fa;
+                      background: ${isPageDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)'};
                       padding: 0.2em 0.4em;
                       border-radius: 3px;
                       font-family: monospace;
                     }
                     .summary-text pre {
-                      background: #f8f9fa;
+                      background: ${isPageDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)'};
                       padding: 1em;
                       border-radius: 5px;
                       overflow-x: auto;
+                    }
+                    mark {
+                      background-color: ${isPageDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.12)'} !important;
+                      color: ${isPageDark ? '#fff' : '#000'} !important;
+                      padding: 2px 6px !important;
+                      border-radius: 3px !important;
+                      border: 1px solid ${isPageDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)'} !important;
+                      font-weight: 500 !important;
                     }
                   </style>
                   <div class="content-section" style="margin-bottom: 25px;" data-section="summary">
@@ -411,7 +571,7 @@
                       
                       section.classList.toggle('highlight', hasMatch);
                       if (hasMatch) {
-                        section.innerHTML = highlightText(originalContent, keyword);
+                        section.innerHTML = highlightText(originalContent, keyword, isPageDark);
                         section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                       } else {
                         section.innerHTML = originalContent;
@@ -433,9 +593,25 @@
         }
       } catch (error) {
         console.error('AI summarization error:', error);
-        // On failure, show the basic summary
-        if (currentModal) {
-          updateSummaryContent(currentModal, basicSummary);
+        // Generate basic summary on failure, but keep existing keywords
+        try {
+          const fallbackSummary = await basicSummarize(text);
+          if (currentModal) {
+            updateSummaryContent(currentModal, {
+              keywords: keywords || [], // Keep existing keywords
+              ...fallbackSummary // Spread the basic summary parts
+            });
+          }
+        } catch (fallbackError) {
+          console.error('Fallback summarization error:', fallbackError);
+          if (currentModal) {
+            updateSummaryContent(currentModal, {
+              keywords: keywords || [],
+              overview: 'Error generating summary: ' + error.message,
+              keyPoints: [],
+              importantDetails: []
+            });
+          }
         }
       }
 
@@ -461,9 +637,9 @@
       fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif',
       fontSize = '14px',
       lineHeight = '1.5',
-      headingColor = '#34495e',
-      headingFontFamily = fontFamily,
-      headingFontWeight = '600',
+      headingColor,
+      headingFontFamily,
+      headingFontWeight,
       isPageDark = false
     } = styles;
 
@@ -501,12 +677,12 @@
     }
 
     const keywordsHTML = summary.keywords
-      .map(({word, frequency}) => `
+      .map(({word, frequency}, index) => `
         <span 
-          class="keyword-tag"
+          class="keyword-tag ${index >= 5 ? 'hidden-keyword' : ''}"
           data-keyword="${word.toLowerCase()}"
           style="
-            display: inline-block;
+            display: ${index >= 5 ? 'none' : 'inline-block'};
             margin: 4px;
             padding: 4px 12px;
             background: ${isPageDark ? 'rgba(255,255,255,0.05)' : '#f8f9fa'};
@@ -522,16 +698,49 @@
       `)
       .join('');
 
+    const showMoreButton = summary.keywords.length > 5 ? `
+      <div
+        id="toggle-keywords"
+        style="
+          display: flex;
+          align-items: center;
+          margin: 12px 0;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        "
+      >
+        <div class="toggle-line" style="flex-grow: 1; height: 1px; background: ${isPageDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}; transition: background 0.2s ease;"></div>
+        <div class="toggle-text" style="
+          padding: 0 12px;
+          font-size: 12px;
+          color: ${isPageDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)'};
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          transition: color 0.2s ease;
+        ">
+          <span>Show More</span>
+          <span style="
+            display: inline-block;
+            transform: rotate(90deg);
+            transition: transform 0.3s ease;
+          ">›</span>
+        </div>
+        <div class="toggle-line" style="flex-grow: 1; height: 1px; background: ${isPageDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}; transition: background 0.2s ease;"></div>
+      </div>
+    ` : '';
+
     contentWrapper.innerHTML = `
       <style>
         .keyword-tag:hover {
-          background: ${isPageDark ? 'rgba(255,255,255,0.1)' : '#e9ecef'} !important;
+          background: ${isPageDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'} !important;
           transform: translateY(-1px);
         }
         .keyword-tag.active {
-          background: #3498db !important;
-          color: white !important;
-          border-color: #3498db !important;
+          background: ${isPageDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'} !important;
+          color: ${isPageDark ? '#fff' : '#000'} !important;
+          border-color: ${isPageDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)'} !important;
+          font-weight: 500;
         }
         .content-section {
           transition: all 0.3s ease;
@@ -541,7 +750,7 @@
           color: ${color};
         }
         .content-section.highlight {
-          background: ${isPageDark ? 'rgba(255,255,255,0.05)' : '#f8f9fa'};
+          background: ${isPageDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)'};
           border-radius: 8px;
           padding: 15px;
           margin: -15px;
@@ -552,10 +761,30 @@
           font-weight: ${headingFontWeight};
           margin-bottom: 12px;
         }
+        #toggle-keywords:hover {
+          opacity: 0.8;
+        }
+        #toggle-keywords:hover .toggle-line {
+          background: ${isPageDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)'};
+        }
+        #toggle-keywords:hover .toggle-text {
+          color: ${isPageDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.8)'};
+        }
+        mark {
+          background-color: ${isPageDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.12)'} !important;
+          color: ${isPageDark ? '#fff' : '#000'} !important;
+          padding: 2px 6px !important;
+          border-radius: 3px !important;
+          border: 1px solid ${isPageDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)'} !important;
+          font-weight: 500 !important;
+        }
       </style>
       <div style="margin-bottom: 25px;">
         <h3>Key Terms</h3>
-        <div style="line-height: 2;" id="keywords-container">${keywordsHTML}</div>
+        <div style="line-height: 2;" id="keywords-container">
+          ${keywordsHTML}
+          ${showMoreButton}
+        </div>
       </div>
       <div class="content-section" style="margin-bottom: 25px;" data-section="overview">
         <h3>Overview</h3>
@@ -609,10 +838,38 @@
       </div>
     `;
 
-    // Reattach event listeners for keywords
+    // Reattach event listeners for keywords and toggle button
     const keywordTags = contentWrapper.querySelectorAll('.keyword-tag');
     const contentSections = contentWrapper.querySelectorAll('.content-section');
+    const toggleButton = contentWrapper.querySelector('#toggle-keywords');
     let activeKeyword = null;
+    let isExpanded = false;
+
+    if (toggleButton) {
+      toggleButton.addEventListener('click', () => {
+        const hiddenKeywords = contentWrapper.querySelectorAll('.hidden-keyword');
+        isExpanded = !isExpanded;
+        
+        hiddenKeywords.forEach(keyword => {
+          keyword.style.display = isExpanded ? 'inline-block' : 'none';
+        });
+        
+        const arrow = toggleButton.querySelector('span:last-child');
+        const text = toggleButton.querySelector('span:first-child');
+        arrow.style.transform = isExpanded ? 'rotate(270deg)' : 'rotate(90deg)';
+        text.textContent = isExpanded ? 'Show Less' : 'Show More';
+        
+        toggleButton.style.opacity = '1';
+      });
+
+      toggleButton.addEventListener('mouseover', () => {
+        toggleButton.style.opacity = '0.8';
+      });
+
+      toggleButton.addEventListener('mouseout', () => {
+        toggleButton.style.opacity = '1';
+      });
+    }
 
     keywordTags.forEach(tag => {
       tag.addEventListener('click', () => {
@@ -638,7 +895,7 @@
           
           section.classList.toggle('highlight', hasMatch);
           if (hasMatch) {
-            section.innerHTML = highlightText(originalContent, keyword);
+            section.innerHTML = highlightText(originalContent, keyword, isPageDark);
             section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           } else {
             section.innerHTML = originalContent;
