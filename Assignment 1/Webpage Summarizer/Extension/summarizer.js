@@ -775,17 +775,35 @@
     
     if (selection) {
       return new Promise((resolve) => {
-        // Create side panel for selection choice
-        const container = document.createElement('div');
-        container.style.cssText = `
+        // Create overlay for outside click detection
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
           position: fixed;
           top: 0;
-          right: 0;
-          width: 300px;
-          background: var(--bg-primary);
-          box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: rgba(0, 0, 0, 0.5);
+          backdrop-filter: blur(2px);
           z-index: 10000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          transition: opacity 0.2s ease;
+        `;
+        document.body.appendChild(overlay);
+        
+        // Create container for the dialog
+        const container = document.createElement('div');
+        container.style.cssText = `
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+          width: 400px;
+          transform: translateY(20px);
           transition: transform 0.3s ease;
+          opacity: 0;
         `;
 
         // Create modal with dark mode support
@@ -794,7 +812,7 @@
         
         promptModal.style.cssText = `
           background: ${isDarkMode ? '#1a1a1a' : 'white'};
-          padding: 0;
+          border-radius: 8px;
           overflow: hidden;
           color: ${isDarkMode ? '#e0e0e0' : '#2c3e50'};
         `;
@@ -838,19 +856,25 @@
           </div>
         `;
 
+        // Function to close the dialog
+        const closeDialog = () => {
+          overlay.style.opacity = '0';
+          container.style.transform = 'translateY(20px)';
+          container.style.opacity = '0';
+          setTimeout(() => overlay.remove(), 200);
+        };
+
         // Handle button clicks
         const selectionBtn = promptModal.querySelector('#summarize-selection');
         const pageBtn = promptModal.querySelector('#summarize-page');
 
         selectionBtn.onclick = () => {
-          container.style.transform = 'translateX(100%)';
-          setTimeout(() => container.remove(), 300);
+          closeDialog();
           resolve(selection);
         };
 
         pageBtn.onclick = () => {
-          container.style.transform = 'translateX(100%)';
-          setTimeout(() => container.remove(), 300);
+          closeDialog();
           resolve(document.body.innerText);
         };
 
@@ -864,8 +888,23 @@
           });
         });
 
+        // Handle outside clicks
+        overlay.addEventListener('click', (e) => {
+          if (e.target === overlay) {
+            closeDialog();
+            resolve(null);
+          }
+        });
+
         container.appendChild(promptModal);
-        document.body.appendChild(container);
+        overlay.appendChild(container);
+
+        // Trigger animations after a brief delay
+        requestAnimationFrame(() => {
+          overlay.style.opacity = '1';
+          container.style.transform = 'translateY(0)';
+          container.style.opacity = '1';
+        });
       });
     }
     

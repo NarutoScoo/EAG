@@ -37,6 +37,11 @@ Webpage Summarizer/
 - Firefox extension for webpage summarization
 - Features include:
   - Context menu integration
+  - Enhanced text selection handling:
+    - Centered modal dialog for selection options
+    - Backdrop blur effect for focus
+    - Click-outside dismissal
+    - Smooth animations
   - Full page or selection summarization
   - Multiple AI provider support:
     - OpenAI (latest GPT-4 and GPT-3.5 models)
@@ -82,15 +87,15 @@ Webpage Summarizer/
 ## Recent Changes
 
 ### [2024-03-14]
-- Enhanced UI adaptability:
-  - Added automatic style inheritance from webpages
-  - Improved visual consistency with host pages
-  - Better font and color matching
-  - Adaptive heading styles and text properties
+- Enhanced selection dialog:
+  - Added centered modal with backdrop blur
+  - Improved dismissal behavior with click-outside
+  - Added smooth animations and transitions
+  - Better visual hierarchy and focus
 - Previous changes:
+  - Added automatic style inheritance
+  - Improved visual consistency
   - Added markdown to HTML conversion
-  - Improved formatting of summaries
-  - Added debug logging
   - Enhanced error handling
   - Modular backend structure
   - Dynamic model loading 

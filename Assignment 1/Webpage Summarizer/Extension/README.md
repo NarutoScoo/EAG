@@ -14,6 +14,12 @@ A Firefox browser extension that provides intelligent webpage summarization usin
 - Key points identification
 
 ### User Interface
+- Enhanced selection dialog:
+  - Centered modal with backdrop blur
+  - Click-outside dismissal
+  - Smooth animations and transitions
+  - Clear visual hierarchy
+  - Dark mode support
 - Adaptive styling that matches webpage design:
   - Inherits webpage's font family and size
   - Matches text colors and styles
@@ -29,7 +35,6 @@ A Firefox browser extension that provides intelligent webpage summarization usin
   - Clickable keywords for highlighting
   - Smooth scrolling to matches
   - Hover effects for better UX
-- Dark mode support
 - Loading indicators
 - Clean, modern design
 
@@ -58,12 +63,17 @@ A Firefox browser extension that provides intelligent webpage summarization usin
 
 ## Usage
 
-1. Right-click on any webpage or selected text
-2. Choose "Summarize" from the context menu
-3. View the summary in the adaptive side panel
-4. Use keywords to highlight relevant content
-5. Resize the panel as needed
-6. Close with the × button when done
+1. Select text on any webpage (optional)
+2. Right-click to open the context menu
+3. Choose "Summarize" from the context menu
+4. If text is selected:
+   - A centered modal appears with options
+   - Choose between summarizing selection or full page
+   - Click outside to dismiss if needed
+5. View the summary in the adaptive side panel
+6. Use keywords to highlight relevant content
+7. Resize the panel as needed
+8. Close with the × button when done
 
 ## Development
 
@@ -82,9 +92,14 @@ No build step required. The extension can be loaded directly into Firefox.
 
 1. Make changes to the code
 2. Reload the extension in `about:debugging`
-3. Test on various websites to ensure style adaptation works
-4. Verify dark mode compatibility
-5. Check error handling scenarios
+3. Test on various websites to ensure:
+   - Selection dialog appears centered
+   - Backdrop blur works correctly
+   - Click-outside dismissal functions
+   - Animations are smooth
+   - Style adaptation works
+   - Dark mode compatibility
+4. Check error handling scenarios
 
 ## Recent Changes
 
