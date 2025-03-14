@@ -155,11 +155,14 @@
     }
 
     #status {
-      margin-top: 20px;
+      margin-bottom: 20px;
       padding: 12px 16px;
       border-radius: 6px;
       display: none;
       font-weight: 500;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
 
     .help-text {
@@ -204,6 +207,7 @@
 </head>
 <body>
   <div class="container">
+    <div id="status"></div>
     <h1>Webpage Summarizer Settings</h1>
     <form>
       <div class="section">
@@ -220,31 +224,48 @@
           <div class="form-group">
             <label for="openai-model">OpenAI Model</label>
             <select id="openai-model" name="openai-model">
-              <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+              <option value="gpt-4-0125-preview">GPT-4 Turbo (Latest)</option>
+              <option value="gpt-4-1106-preview">GPT-4 Turbo</option>
               <option value="gpt-4">GPT-4</option>
-              <option value="gpt-4-turbo-preview">GPT-4 Turbo</option>
+              <option value="gpt-3.5-turbo-0125">GPT-3.5 Turbo (Latest)</option>
+              <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
             </select>
+            <p class="help-text">Models are listed from newest to oldest versions</p>
           </div>
         </div>
 
         <div id="ollama-section" style="display: none;">
           <div class="form-group">
             <label for="ollama-model">Ollama Model</label>
-            <div class="model-input-group">
-              <select id="ollama-model-preset" name="ollama-model-preset">
-                <option value="custom">Custom Model</option>
-                <option value="llama2">Llama 2</option>
-                <option value="mistral">Mistral</option>
-                <option value="codellama">Code Llama</option>
-                <option value="vicuna">Vicuna</option>
+            <div class="model-input-group" style="position: relative;">
+              <select id="ollama-model-preset" name="ollama-model-preset" style="width: 100%;">
+                <!-- Models will be populated dynamically -->
               </select>
-              <input type="text" 
-                     id="ollama-model" 
-                     name="ollama-model" 
-                     placeholder="Enter custom model name"
-                     style="display: none;">
+              <button type="button" 
+                      id="refresh-models" 
+                      title="Refresh available models"
+                      style="
+                        position: absolute;
+                        right: 40px;
+                        top: 50%;
+                        transform: translateY(-50%);
+                        padding: 4px;
+                        background: none;
+                        border: none;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        opacity: 0.6;
+                        transition: all 0.2s ease;
+                        color: var(--text-primary);
+                      ">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/>
+                </svg>
+              </button>
             </div>
-            <p class="help-text">Select a preset model or choose "Custom Model" to enter a specific model name</p>
+            <p class="help-text" id="ollama-help-text">Models are loaded from your local Ollama instance</p>
           </div>
         </div>
       </div>
@@ -268,7 +289,6 @@
         <button type="submit">Save Settings</button>
       </div>
     </form>
-    <div id="status"></div>
   </div>
   <script src="options.js"></script>
 </body>

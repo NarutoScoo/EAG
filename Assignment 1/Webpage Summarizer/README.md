@@ -37,7 +37,9 @@ Webpage Summarizer/
 - Features include:
   - Context menu integration
   - Full page or selection summarization
-  - Multiple AI provider support (OpenAI, Ollama)
+  - Multiple AI provider support:
+    - OpenAI (latest GPT-4 and GPT-3.5 models)
+    - Ollama (dynamic model loading)
   - Interactive summary interface with keyword highlighting
   - Dark mode support
   - Progressive UI updates with loading indicators
@@ -45,7 +47,7 @@ Webpage Summarizer/
   - Keyword extraction and interactive highlighting
   - Clean text formatting with preserved line breaks
   - Simplified UI with neutral terminology
-  - User-friendly loading states
+  - Dynamic settings management
 
 ### Test Interface
 - HTML-based API testing interface
@@ -72,19 +74,14 @@ Webpage Summarizer/
 
 ## Recent Changes
 
-### [2024-03-13]
-- refactor(backend): Improved code organization and modularity
-  - Split backend into logical modules
-  - Added debug logging
+### [2024-03-14]
+- Enhanced extension settings:
+  - Dynamic Ollama model loading
+  - Updated OpenAI model list
+  - Improved settings UI with better feedback
+  - Real-time model refresh capability
+- Previous changes:
+  - Modular backend structure
   - Improved error handling
-  - Better separation of concerns
-- fix(extension): Improved UI/UX and error handling
-  - Enhanced text display with proper line breaks
-  - Updated loading message for better user experience
-  - Improved keyword extraction and highlighting
-  - Fixed loading state behavior
-  - Enhanced error handling for API responses
-  - Updated content security policy
-  - Improved response handling from backend
-  - Added better console logging for debugging
-  - Fixed basic summary fallback behavior 
+  - Enhanced UI/UX
+  - Better response handling 

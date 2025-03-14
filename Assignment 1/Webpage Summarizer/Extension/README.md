@@ -7,8 +7,13 @@ A Firefox browser extension that provides intelligent webpage summarization capa
 - Context menu integration for easy access
 - Support for both full page and selected text summarization
 - Multiple AI provider support:
-  - OpenAI (GPT-3.5, GPT-4)
+  - OpenAI (GPT-4 and GPT-3.5 series)
+    - Latest models including GPT-4 Turbo
+    - Version-specific selection
   - Ollama (local models)
+    - Dynamic model discovery
+    - Real-time model refresh
+    - Automatic model loading
 - Interactive summary interface:
   - Keyword highlighting and navigation
   - Clean, modern UI design
@@ -16,9 +21,10 @@ A Firefox browser extension that provides intelligent webpage summarization capa
 - Progressive loading states with user-friendly messages
 - Robust error handling with fallback summaries
 - Configurable settings:
-  - Model selection
+  - Provider selection (OpenAI/Ollama)
+  - Model selection with version info
   - API configuration
-  - Custom model support
+  - Real-time feedback
 
 ## Installation
 
@@ -55,16 +61,14 @@ A Firefox browser extension that provides intelligent webpage summarization capa
 
 ## Recent Changes
 
-### [2024-03-13]
-- Enhanced user experience:
-  - Updated loading message to use neutral terminology
-  - Improved text display formatting
-  - Better keyword extraction and highlighting
-- Reliability improvements:
+### [2024-03-14]
+- Enhanced settings interface:
+  - Dynamic Ollama model loading
+  - Updated OpenAI model list
+  - Real-time model refresh
+  - Improved visual feedback
+  - Better error handling
+- Previous updates:
+  - Improved text display
   - Enhanced error handling
-  - Better API response validation
-  - Improved fallback behavior
-- UI enhancements:
-  - Cleaner loading states
-  - More intuitive progress indication
-  - Better dark mode support 
+  - Better response validation 
