@@ -923,13 +923,14 @@
     // Get heading styles from a sample h2 or h3 element
     const sampleHeading = document.querySelector('h2, h3');
     const headingStyles = sampleHeading ? window.getComputedStyle(sampleHeading) : null;
-    const headingColor = headingStyles ? headingStyles.color : (isPageDark ? '#e0e0e0' : '#2c3e50');
-    const headingFontFamily = headingStyles ? headingStyles.fontFamily : pageFontFamily;
-    const headingFontWeight = headingStyles ? headingStyles.fontWeight : '600';
     
     // Determine if the page background is dark
     const bgColor = pageBackground === 'transparent' ? (isDarkMode ? '#1a1a1a' : 'white') : pageBackground;
     const isPageDark = isColorDark(bgColor);
+
+    const headingColor = headingStyles ? headingStyles.color : (isPageDark ? '#e0e0e0' : '#2c3e50');
+    const headingFontFamily = headingStyles ? headingStyles.fontFamily : pageFontFamily;
+    const headingFontWeight = headingStyles ? headingStyles.fontWeight : '600';
     
     // Create container for the side panel
     const container = document.createElement('div');
