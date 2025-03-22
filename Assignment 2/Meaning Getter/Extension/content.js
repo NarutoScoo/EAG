@@ -29,18 +29,27 @@ document.addEventListener('mousedown', function(event) {
 
 async function getMeaning(word) {
     try {
-        // First try our local backend
-        const response = await fetch(`http://localhost:8050/api/meaning/${encodeURIComponent(word)}`);
-        const data = await response.json();
-        
-        if (!response.ok) {
+        // Try local backend first
+        try {
+            const backendResponse = await fetch(`http://localhost:8050/api/meaning/${encodeURIComponent(word)}`);
+            if (backendResponse.ok) {
+                const data = await backendResponse.json();
+                return formatMeaning(data);
+            }
+        } catch (backendError) {
+            console.log('Backend unavailable, falling back to dictionary API');
+        }
+
+        // Fallback to dictionary API
+        const dictResponse = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
+        if (!dictResponse.ok) {
             return `<div class="not-found">
                 <h3>${word}</h3>
                 <p>No definition found for this word.</p>
                 <p>Try checking the spelling or search for a different word.</p>
             </div>`;
         }
-        
+        const data = await dictResponse.json();
         return formatMeaning(data);
     } catch (error) {
         return `<div class="error">
