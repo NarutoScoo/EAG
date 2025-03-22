@@ -1,5 +1,20 @@
 let tooltip = null;
 
+// Add marked library at the top
+const marked = {
+    parse: function(markdown) {
+        return markdown
+            .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+            .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+            .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/\n/g, '<br>')
+            .replace(/- (.*)/g, '<li>$1</li>')
+            .replace(/<\/li>\n<li>/g, '</li><li>');
+    }
+};
+
 document.addEventListener('mouseup', async function(event) {
     const selectedText = window.getSelection().toString().trim();
     
@@ -15,6 +30,11 @@ document.addEventListener('mouseup', async function(event) {
             showTooltip(event.pageX, event.pageY, meaning);
         } catch (error) {
             console.error('Error fetching meaning:', error);
+            showTooltip(event.pageX, event.pageY, `<div class="error">
+                <h3>${selectedText}</h3>
+                <p>Unable to fetch definition.</p>
+                <p>Please try again later.</p>
+            </div>`);
         }
     }
 });
@@ -29,58 +49,50 @@ document.addEventListener('mousedown', function(event) {
 
 async function getMeaning(word) {
     try {
-        // Try local backend first
-        try {
-            const backendResponse = await fetch(`http://localhost:8050/api/meaning/${encodeURIComponent(word)}`);
-            if (backendResponse.ok) {
-                const data = await backendResponse.json();
-                return formatMeaning(data);
-            }
-        } catch (backendError) {
-            console.log('Backend unavailable, falling back to dictionary API');
-        }
-
-        // Fallback to dictionary API
-        const dictResponse = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
-        if (!dictResponse.ok) {
-            return `<div class="not-found">
-                <h3>${word}</h3>
-                <p>No definition found for this word.</p>
-                <p>Try checking the spelling or search for a different word.</p>
-            </div>`;
-        }
-        const data = await dictResponse.json();
-        return formatMeaning(data);
+        const response = await browser.runtime.sendMessage({
+            type: 'GET_MEANING',
+            word: word
+        });
+        return formatMeaning(response);
     } catch (error) {
-        return `<div class="error">
+        console.error('Error getting meaning:', error);
+        return `<div class="not-found">
             <h3>${word}</h3>
-            <p>Unable to fetch definition.</p>
-            <p>Please try again later.</p>
+            <p>No definition found for this word.</p>
+            <p>Try checking the spelling or search for a different word.</p>
         </div>`;
     }
 }
 
 function formatMeaning(data) {
-    if (!data || !data[0]) return 'No meaning found';
-    
-    const word = data[0];
-    let meaningText = `<h3>${word.word}</h3>`;
-    
-    if (word.phonetic) {
-        meaningText += `<p><i>${word.phonetic}</i></p>`;
+    if (!data || (!data.meanings && !data.definition)) {
+        return 'No meaning found';
     }
+    
+    let meaningText = `<h3>${data.word}</h3>`;
+    
+    // Handle Ollama response format
+    if (data.meanings && data.meanings[0].definitions) {
+        // Dictionary API format
+        if (data.phonetic) {
+            meaningText += `<p><i>${data.phonetic}</i></p>`;
+        }
 
-    if (word.meanings && word.meanings.length > 0) {
-        word.meanings.forEach(meaning => {
+        data.meanings.forEach(meaning => {
             meaningText += `<p><strong>${meaning.partOfSpeech}</strong></p>`;
             if (meaning.definitions && meaning.definitions.length > 0) {
                 meaningText += '<ul>';
                 meaning.definitions.slice(0, 2).forEach(def => {
-                    meaningText += `<li>${def.definition}</li>`;
+                    // Parse markdown in the definition
+                    const parsedDef = marked.parse(def.definition);
+                    meaningText += `<li>${parsedDef}</li>`;
                 });
                 meaningText += '</ul>';
             }
         });
+    } else {
+        // Direct Ollama response
+        meaningText += marked.parse(data.meanings[0].definitions[0].definition);
     }
 
     return meaningText;
@@ -104,7 +116,7 @@ function showTooltip(x, y, content) {
     `;
     tooltip.innerHTML = content;
 
-    // Add some error styling
+    // Add some error styling and markdown styles
     const style = document.createElement('style');
     style.textContent = `
         .not-found, .error {
@@ -116,6 +128,23 @@ function showTooltip(x, y, content) {
         .not-found h3, .error h3 {
             margin-top: 0;
             color: #721c24;
+        }
+        /* Markdown styles */
+        h1, h2, h3 { margin: 0.5em 0; }
+        p { margin: 0.5em 0; }
+        ul { margin: 0.5em 0; padding-left: 20px; }
+        li { margin: 0.2em 0; }
+        code { 
+            background: #f4f4f4;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 1em;
+            border-radius: 3px;
+            overflow-x: auto;
         }
     `;
     tooltip.appendChild(style);

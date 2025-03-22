@@ -1,5 +1,5 @@
-from dash import Dash
-from flask import jsonify
+from flask import Flask, jsonify, request
+from flask_cors import CORS
 import requests
 import logging
 import json
@@ -11,11 +11,27 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-app = Dash(__name__)
-server = app.server
+app = Flask(__name__)
+CORS(app)
 
-def query_ollama(prompt, model="mistral"):
+def get_available_models():
+    """Get list of available Ollama models"""
+    try:
+        response = requests.get('http://localhost:11434/api/tags')
+        if response.ok:
+            models = response.json()['models']
+            return [model['name'] for model in models]
+        return []
+    except Exception as e:
+        logger.error(f"Error fetching models: {str(e)}")
+        return []
+
+def query_ollama(prompt, model=None):
     """Query Ollama model running locally"""
+    if not model:
+        models = get_available_models()
+        model = models[0] if models else "mistral"
+    
     try:
         logger.debug(f"Querying Ollama model '{model}' with prompt: {prompt}")
         
@@ -38,28 +54,44 @@ def query_ollama(prompt, model="mistral"):
         logger.error(f"Error querying Ollama: {str(e)}")
         return None
 
-@server.route('/api/meaning/<word>')
+@app.route('/api/models', methods=['GET'])
+def list_models():
+    """Endpoint to list available models"""
+    models = get_available_models()
+    return jsonify({"models": models})
+
+@app.route('/api/meaning/<word>', methods=['GET'])
 def get_meaning(word):
     logger.info(f"Received request for word: {word}")
+    model = request.args.get('model', None)
     
     try:
         # First attempt: Local Ollama
-        prompt = f"Define the word '{word}' and specify its part of speech. Format the response as a brief dictionary definition."
-        logger.debug(f"Attempting Ollama definition for: {word}")
+        prompt = f"""Define the word '{word}' and specify its part of speech. 
+Format the response in markdown with:
+- Word as heading
+- Part of speech in *italics*
+- Definition in a clear, concise manner
+- Example usage if relevant"""
         
-        llm_response = query_ollama(prompt)
+        logger.debug(f"Attempting Ollama definition for: {word} using model: {model}")
+        
+        llm_response = query_ollama(prompt, model)
         
         if llm_response and len(llm_response) > 10:
             logger.debug(f"Ollama definition received: {llm_response}")
-            return jsonify({
+            # Format response to match expected structure
+            formatted_response = {
                 "word": word,
                 "meanings": [{
                     "partOfSpeech": "definition",
                     "definitions": [{
-                        "definition": llm_response
+                        "definition": llm_response.strip()
                     }]
                 }]
-            })
+            }
+            logger.debug(f"Formatted response: {formatted_response}")
+            return jsonify(formatted_response)
         else:
             logger.warning(f"No valid Ollama response for word: {word}")
         
@@ -70,7 +102,9 @@ def get_meaning(word):
         
         if response.ok:
             logger.debug("Dictionary API response received successfully")
-            return jsonify(response.json()[0])
+            api_response = response.json()[0]
+            logger.debug(f"API Response: {api_response}")
+            return jsonify(api_response)
         else:
             logger.error(f"Dictionary API error: {response.status_code}")
             return jsonify({
@@ -87,4 +121,5 @@ def get_meaning(word):
 
 if __name__ == '__main__':
     logger.info("Starting Meaning Getter backend server")
-    app.run_server(debug=True, port=8050) 
+    logger.info(f"Available models: {get_available_models()}")
+    app.run(debug=True, port=8050) 
