@@ -1,13 +1,20 @@
 # Meaning Getter Backend
 
-Local LLM-powered backend server for the Meaning Getter extension.
+Local Ollama-powered backend server for the Meaning Getter extension.
 
 ## Features
-- Local LLM (flan-t5-small) for word definitions
-- Singleton pattern for LLM to prevent multiple model loads
+- Local Ollama integration for word definitions
 - Built-in fallback to Dictionary API
 - RESTful API endpoint
+- Comprehensive logging
 - Error handling and validation
+
+## Prerequisites
+1. Install Ollama from https://ollama.ai/
+2. Pull the Mistral model:
+   ```bash
+   ollama pull mistral
+   ```
 
 ## Setup
 1. Install dependencies:
@@ -15,7 +22,12 @@ Local LLM-powered backend server for the Meaning Getter extension.
    pip install -r requirements.txt
    ```
 
-2. Start the server:
+2. Ensure Ollama is running:
+   ```bash
+   ollama serve
+   ```
+
+3. Start the server:
    ```bash
    python app.py
    ```
@@ -24,8 +36,8 @@ Local LLM-powered backend server for the Meaning Getter extension.
 
 ### GET /api/meaning/<word>
 Returns word definition using the following flow:
-1. Attempts definition using local LLM
-2. Falls back to Dictionary API if LLM fails
+1. Attempts definition using local Ollama model
+2. Falls back to Dictionary API if Ollama fails
 3. Returns error if both sources fail
 
 #### Response Format
@@ -36,7 +48,7 @@ Success:
     "meanings": [{
         "partOfSpeech": "definition",
         "definitions": [{
-            "definition": "LLM or API response"
+            "definition": "Ollama or API response"
         }]
     }]
 }
@@ -52,18 +64,19 @@ Error:
 
 ## Configuration
 - Server runs on port 8050
-- Uses google/flan-t5-small model (loaded once at startup)
-- Maximum response length: 200 tokens
-- Thread-safe LLM instance
+- Uses Ollama's Mistral model (default)
+- Ollama runs on localhost:11434
+- Comprehensive logging enabled
 
 ## Dependencies
 - dash==2.14.2
 - flask==3.0.2
 - requests==2.31.0
-- transformers==4.37.2
-- torch==2.2.0
 
-## Performance Optimizations
-- Single LLM instance shared across requests
-- Thread-safe model access
-- Graceful fallback to Dictionary API 
+## Debugging
+- Check logs for detailed information about:
+  - Incoming requests
+  - Ollama model responses
+  - API fallback attempts
+  - Error messages and stack traces
+- Logs include timestamps and severity levels 
