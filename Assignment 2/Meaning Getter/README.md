@@ -4,6 +4,7 @@ A Firefox extension with a local LLM backend for instant word definitions.
 
 ## Project Structure 
 
+```
 Meaning Getter/
 ├── Extension/ # Firefox extension files
 │ ├── manifest.json # Extension configuration
@@ -15,6 +16,7 @@ Meaning Getter/
 │ ├── requirements.txt # Python dependencies
 │ └── README.md # Backend documentation
 └── README.md # This file
+```
 
 ## Quick Start
 1. Set up the backend server (see Backend/README.md)
