@@ -4,9 +4,9 @@ import requests
 import logging
 import json
 
-# Configure logging
+# Configure logging - only show INFO and above by default
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
@@ -33,8 +33,6 @@ def query_ollama(prompt, model=None):
         model = models[0] if models else "mistral"
     
     try:
-        logger.debug(f"Querying Ollama model '{model}' with prompt: {prompt}")
-        
         response = requests.post('http://localhost:11434/api/generate', 
             json={
                 "model": model,
@@ -44,10 +42,9 @@ def query_ollama(prompt, model=None):
         )
         
         if response.ok:
-            logger.debug("Ollama response received successfully")
             return response.json()['response']
         else:
-            logger.error(f"Ollama API error: {response.status_code} - {response.text}")
+            logger.error(f"Ollama API error for model {model}")
             return None
             
     except Exception as e:
@@ -62,7 +59,6 @@ def list_models():
 
 @app.route('/api/meaning/<word>', methods=['GET'])
 def get_meaning(word):
-    logger.info(f"Received request for word: {word}")
     model = request.args.get('model', None)
     
     try:
@@ -74,13 +70,10 @@ Format the response in markdown with:
 - Definition in a clear, concise manner
 - Example usage if relevant"""
         
-        logger.debug(f"Attempting Ollama definition for: {word} using model: {model}")
-        
         llm_response = query_ollama(prompt, model)
         
         if llm_response and len(llm_response) > 10:
-            logger.debug(f"Ollama definition received: {llm_response}")
-            # Format response to match expected structure
+            logger.info(f"LLM Definition for '{word}': {llm_response.strip()}")
             formatted_response = {
                 "word": word,
                 "meanings": [{
@@ -90,36 +83,33 @@ Format the response in markdown with:
                     }]
                 }]
             }
-            logger.debug(f"Formatted response: {formatted_response}")
             return jsonify(formatted_response)
-        else:
-            logger.warning(f"No valid Ollama response for word: {word}")
         
         # Fallback: Dictionary API
-        logger.info(f"Falling back to Dictionary API for word: {word}")
+        logger.info(f"Falling back to Dictionary API for '{word}'")
         api_url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word}"
         response = requests.get(api_url)
         
         if response.ok:
-            logger.debug("Dictionary API response received successfully")
             api_response = response.json()[0]
-            logger.debug(f"API Response: {api_response}")
+            logger.info(f"Dictionary API definition found for '{word}'")
             return jsonify(api_response)
         else:
-            logger.error(f"Dictionary API error: {response.status_code}")
+            logger.error(f"No definition found for '{word}'")
             return jsonify({
                 "error": "Word not found",
                 "message": "No definition available in both Ollama and dictionary API"
             }), 404
 
     except Exception as e:
-        logger.error(f"Unexpected error: {str(e)}", exc_info=True)
+        logger.error(f"Error processing '{word}': {str(e)}")
         return jsonify({
             "error": "Service error",
             "message": str(e)
         }), 500
 
 if __name__ == '__main__':
+    available_models = get_available_models()
     logger.info("Starting Meaning Getter backend server")
-    logger.info(f"Available models: {get_available_models()}")
+    logger.info(f"Available models: {available_models}")
     app.run(debug=True, port=8050) 

@@ -25,12 +25,22 @@ document.addEventListener('mouseup', async function(event) {
     }
 
     if (selectedText.length > 0) {
+        // Show loading tooltip immediately
+        showTooltip(event.pageX, event.pageY, `
+            <div class="loading">
+                <h3>${selectedText}</h3>
+                <div class="loading-spinner"></div>
+                <p>Fetching definition...</p>
+            </div>
+        `);
+
         try {
             const meaning = await getMeaning(selectedText);
-            showTooltip(event.pageX, event.pageY, meaning);
+            // Update existing tooltip with meaning
+            updateTooltip(meaning);
         } catch (error) {
             console.error('Error fetching meaning:', error);
-            showTooltip(event.pageX, event.pageY, `<div class="error">
+            updateTooltip(`<div class="error">
                 <h3>${selectedText}</h3>
                 <p>Unable to fetch definition.</p>
                 <p>Please try again later.</p>
@@ -46,6 +56,18 @@ document.addEventListener('mousedown', function(event) {
         tooltip = null;
     }
 });
+
+// Add function to update existing tooltip
+function updateTooltip(content) {
+    if (tooltip) {
+        // Preserve tooltip position but update content
+        const style = tooltip.querySelector('style');
+        tooltip.innerHTML = content;
+        if (style) {
+            tooltip.appendChild(style);
+        }
+    }
+}
 
 async function getMeaning(word) {
     try {
@@ -116,7 +138,7 @@ function showTooltip(x, y, content) {
     `;
     tooltip.innerHTML = content;
 
-    // Add some error styling and markdown styles
+    // Add styles including loading animation
     const style = document.createElement('style');
     style.textContent = `
         .not-found, .error {
@@ -128,6 +150,32 @@ function showTooltip(x, y, content) {
         .not-found h3, .error h3 {
             margin-top: 0;
             color: #721c24;
+        }
+        /* Loading styles */
+        .loading {
+            text-align: center;
+            padding: 10px;
+        }
+        .loading h3 {
+            margin: 0 0 10px 0;
+            color: #666;
+        }
+        .loading p {
+            color: #666;
+            margin: 10px 0 0 0;
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         /* Markdown styles */
         h1, h2, h3 { margin: 0.5em 0; }
