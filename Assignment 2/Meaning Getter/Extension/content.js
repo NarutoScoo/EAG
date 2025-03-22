@@ -29,7 +29,10 @@ document.addEventListener('mousedown', function(event) {
 
 async function getMeaning(word) {
     try {
-        const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
+        // First try our local backend
+        const response = await fetch(`http://localhost:8050/api/meaning/${encodeURIComponent(word)}`);
+        const data = await response.json();
+        
         if (!response.ok) {
             return `<div class="not-found">
                 <h3>${word}</h3>
@@ -37,7 +40,7 @@ async function getMeaning(word) {
                 <p>Try checking the spelling or search for a different word.</p>
             </div>`;
         }
-        const data = await response.json();
+        
         return formatMeaning(data);
     } catch (error) {
         return `<div class="error">

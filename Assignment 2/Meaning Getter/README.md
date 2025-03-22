@@ -1,31 +1,34 @@
-# Meaning Getter
+# Meaning Getter Project
 
-A Firefox extension that instantly shows word definitions when text is selected.
+A Firefox extension with a local LLM backend for instant word definitions.
 
-## Features
-- Get definitions by simply selecting any word
-- Clean tooltip interface with pronunciation and meanings
-- Clear error messages for unknown words or connection issues
-- Works on any webpage
-- Offline-friendly
-- Uses free Dictionary API
+## Project Structure 
 
-## Installation
-1. Clone this repository
-2. Open Firefox and go to `about:debugging`
-3. Click "This Firefox" in the left sidebar
-4. Click "Load Temporary Add-on"
-5. Navigate to the extension directory and select `manifest.json`
+Meaning Getter/
+├── Extension/ # Firefox extension files
+│ ├── manifest.json # Extension configuration
+│ ├── content.js # Core extension functionality
+│ ├── icons/ # Extension icons
+│ └── README.md # Extension documentation
+├── Backend/ # Local LLM server
+│ ├── app.py # Dash/Flask backend server
+│ ├── requirements.txt # Python dependencies
+│ └── README.md # Backend documentation
+└── README.md # This file
+
+## Quick Start
+1. Set up the backend server (see Backend/README.md)
+2. Install the Firefox extension (see Extension/README.md)
+3. Select any word on a webpage to see its definition
+
+## Architecture
+- Frontend: Firefox extension that captures text selection
+- Backend: Python server with:
+  - Primary: Local LLM for offline definitions
+  - Fallback: Dictionary API integration
+- Error Handling: Graceful fallbacks and user-friendly messages
 
 ## Development
-The extension consists of:
-- `manifest.json`: Extension configuration
-- `content.js`: Core functionality for word selection and meaning display
-- `icons/`: Extension icons in different sizes
-
-## API
-Uses the free Dictionary API (api.dictionaryapi.dev) to fetch word definitions.
-
-## Error Handling
-- Shows user-friendly messages when words are not found
-- Displays error messages for network or API issues 
+- Backend runs on port 8050
+- Extension communicates with backend via HTTP
+- Modular structure for easy maintenance

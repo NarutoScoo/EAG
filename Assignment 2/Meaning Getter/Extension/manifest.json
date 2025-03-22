@@ -2,11 +2,12 @@
   "manifest_version": 2,
   "name": "Meaning Getter",
   "version": "1.0",
-  "description": "Get meanings of selected words instantly",
+  "description": "Get meanings of selected words instantly using local LLM and dictionary API",
   
   "permissions": [
     "activeTab",
-    "https://api.dictionaryapi.dev/"
+    "https://api.dictionaryapi.dev/",
+    "http://localhost:8050/"
   ],
 
   "browser_action": {
