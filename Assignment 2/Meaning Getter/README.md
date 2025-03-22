@@ -5,6 +5,7 @@ A Firefox extension that instantly shows word definitions when text is selected.
 ## Features
 - Get definitions by simply selecting any word
 - Clean tooltip interface with pronunciation and meanings
+- Clear error messages for unknown words or connection issues
 - Works on any webpage
 - Offline-friendly
 - Uses free Dictionary API
@@ -23,4 +24,8 @@ The extension consists of:
 - `icons/`: Extension icons in different sizes
 
 ## API
-Uses the free Dictionary API (api.dictionaryapi.dev) to fetch word definitions. 
+Uses the free Dictionary API (api.dictionaryapi.dev) to fetch word definitions.
+
+## Error Handling
+- Shows user-friendly messages when words are not found
+- Displays error messages for network or API issues 

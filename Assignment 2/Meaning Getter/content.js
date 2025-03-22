@@ -28,12 +28,24 @@ document.addEventListener('mousedown', function(event) {
 });
 
 async function getMeaning(word) {
-    const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
-    if (!response.ok) {
-        throw new Error('Word not found');
+    try {
+        const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
+        if (!response.ok) {
+            return `<div class="not-found">
+                <h3>${word}</h3>
+                <p>No definition found for this word.</p>
+                <p>Try checking the spelling or search for a different word.</p>
+            </div>`;
+        }
+        const data = await response.json();
+        return formatMeaning(data);
+    } catch (error) {
+        return `<div class="error">
+            <h3>${word}</h3>
+            <p>Unable to fetch definition.</p>
+            <p>Please try again later.</p>
+        </div>`;
     }
-    const data = await response.json();
-    return formatMeaning(data);
 }
 
 function formatMeaning(data) {
@@ -79,6 +91,23 @@ function showTooltip(x, y, content) {
         font-size: 14px;
     `;
     tooltip.innerHTML = content;
+
+    // Add some error styling
+    const style = document.createElement('style');
+    style.textContent = `
+        .not-found, .error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-radius: 3px;
+            padding: 5px;
+        }
+        .not-found h3, .error h3 {
+            margin-top: 0;
+            color: #721c24;
+        }
+    `;
+    tooltip.appendChild(style);
+    
     document.body.appendChild(tooltip);
 
     // Adjust position if tooltip goes off-screen
