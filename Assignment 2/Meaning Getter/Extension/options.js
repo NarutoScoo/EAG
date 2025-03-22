@@ -61,13 +61,22 @@ async function saveOptions(e) {
 async function restoreOptions() {
     try {
         // Fetch available Ollama models
-        const response = await fetch('http://127.0.0.1:8050/api/models');
-        if (response.ok) {
-            ollamaModels = (await response.json()).models;
-            populateOllamaModels();
-        } else {
-            showStatus('Warning: Local Ollama server not available', 'error');
+        try {
+            const response = await fetch('http://127.0.0.1:8050/api/models');
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Received models:', data); // Debug log
+                ollamaModels = data.models || [];
+            } else {
+                console.error('Failed to fetch models:', response.status);
+                showStatus('Warning: Local Ollama server not available', 'error');
+            }
+        } catch (error) {
+            console.error('Error fetching models:', error);
+            showStatus('Error connecting to Ollama server', 'error');
         }
+
+        populateOllamaModels();
 
         // Restore saved settings
         const settings = await browser.storage.sync.get({
@@ -115,6 +124,18 @@ async function restoreOptions() {
 function populateOllamaModels() {
     const select = document.getElementById('ollamaModelSelect');
     select.innerHTML = '';
+    
+    if (!ollamaModels || ollamaModels.length === 0) {
+        // Add a default option if no models are found
+        const option = document.createElement('option');
+        option.value = 'mistral';  // default model
+        option.textContent = 'No models found - using mistral';
+        select.appendChild(option);
+        
+        showStatus('No Ollama models found. Make sure Ollama is running and models are installed.', 'error');
+        return;
+    }
+
     ollamaModels.forEach(model => {
         const option = document.createElement('option');
         option.value = model;

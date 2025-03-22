@@ -60,15 +60,7 @@ def query_gemini(prompt, model_name, api_key):
     try:
         genai.configure(api_key=api_key)
         
-        # Configure safety settings
-        safety_settings = {
-            HarmCategory.HARASSMENT: HarmBlockThreshold.MEDIUM_AND_ABOVE,
-            HarmCategory.HATE_SPEECH: HarmBlockThreshold.MEDIUM_AND_ABOVE,
-            HarmCategory.SEXUALLY_EXPLICIT: HarmBlockThreshold.MEDIUM_AND_ABOVE,
-            HarmCategory.DANGEROUS_CONTENT: HarmBlockThreshold.MEDIUM_AND_ABOVE,
-        }
-
-        # Initialize model with appropriate configuration
+        # Initialize model with basic configuration
         generation_config = {
             'temperature': 0.7,
             'top_p': 0.8,
@@ -76,7 +68,6 @@ def query_gemini(prompt, model_name, api_key):
         }
 
         model = genai.GenerativeModel(model_name=model_name,
-                                    safety_settings=safety_settings,
                                     generation_config=generation_config)
         
         response = model.generate_content(prompt)
@@ -109,6 +100,7 @@ Format the response in markdown with:
         
         if provider == 'ollama':
             response = query_ollama(prompt, model)
+            logger.info(f"Using Ollama (model: {model or 'default'}) for word: '{word}'")
         elif provider == 'openai' and api_key:
             openai.api_key = api_key
             completion = openai.ChatCompletion.create(
@@ -116,11 +108,13 @@ Format the response in markdown with:
                 messages=[{"role": "user", "content": prompt}]
             )
             response = completion.choices[0].message.content
+            logger.info(f"Using OpenAI (model: {model or 'gpt-3.5-turbo'}) for word: '{word}'")
         elif provider == 'gemini' and api_key:
             response = query_gemini(prompt, model or 'gemini-pro', api_key)
+            logger.info(f"Using Gemini (model: {model or 'gemini-pro'}) for word: '{word}'")
         
         if response and len(response) > 10:
-            logger.info(f"Definition from {provider} for '{word}': {response.strip()}")
+            logger.info(f"Definition generated: {response.strip()}")
             return jsonify({
                 "word": word,
                 "meanings": [{
@@ -130,9 +124,11 @@ Format the response in markdown with:
                     }]
                 }]
             })
+        else:
+            logger.warning(f"No valid response from {provider}, falling back to Dictionary API")
         
-        # Fallback to Dictionary API
-        logger.info(f"Falling back to Dictionary API for '{word}'")
+        # Fallback: Dictionary API
+        logger.info(f"Using Dictionary API fallback for '{word}'")
         api_url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word}"
         response = requests.get(api_url)
         
