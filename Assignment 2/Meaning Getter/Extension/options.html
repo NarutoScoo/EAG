@@ -6,15 +6,31 @@
         body {
             padding: 20px;
             font-family: Arial, sans-serif;
+            color: #333;
         }
         .container {
             max-width: 600px;
             margin: 0 auto;
         }
-        select {
-            margin: 10px 0;
-            padding: 5px;
-            width: 200px;
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .provider-select {
+            margin-bottom: 15px;
+        }
+        select, input {
+            margin: 5px 0;
+            padding: 8px;
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .api-key-section {
+            display: none;
+            margin-top: 10px;
         }
         .status {
             margin-top: 10px;
@@ -29,16 +45,84 @@
             background-color: #f8d7da;
             color: #721c24;
         }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .provider-info {
+            font-size: 0.9em;
+            color: #666;
+            margin: 5px 0;
+        }
+        .model-description {
+            font-size: 0.85em;
+            color: #666;
+            margin: 5px 0;
+            padding: 5px;
+            background: #f5f5f5;
+            border-radius: 3px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Meaning Getter Options</h1>
-        <div>
-            <label for="modelSelect">Select LLM Model:</label>
-            <select id="modelSelect"></select>
+        
+        <div class="section">
+            <h2>Model Provider</h2>
+            <select id="providerSelect">
+                <option value="ollama">Ollama (Local)</option>
+                <option value="openai">OpenAI</option>
+                <option value="gemini">Google Gemini</option>
+            </select>
+            
+            <!-- Ollama Section -->
+            <div id="ollamaSection" class="provider-section">
+                <p class="provider-info">Select from available local Ollama models</p>
+                <select id="ollamaModelSelect"></select>
+            </div>
+
+            <!-- OpenAI Section -->
+            <div id="openaiSection" class="provider-section api-key-section">
+                <p class="provider-info">Use OpenAI's powerful language models</p>
+                <select id="openaiModelSelect">
+                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                    <option value="gpt-4">GPT-4</option>
+                </select>
+                <input type="password" id="openaiKey" placeholder="Enter OpenAI API Key">
+            </div>
+
+            <!-- Gemini Section -->
+            <div id="geminiSection" class="provider-section api-key-section">
+                <p class="provider-info">Use Google's Gemini AI</p>
+                <select id="geminiModelSelect">
+                    <option value="gemini-2.0-flash">Gemini 2.0 Flash (Fast, Multimodal)</option>
+                    <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash-Lite (Fast, Efficient)</option>
+                    <option value="gemini-2.0-pro-exp-02-05">Gemini 2.0 Pro Experimental (Most Powerful)</option>
+                    <option value="gemini-pro">Gemini Pro (Legacy)</option>
+                </select>
+                <div class="model-description" id="geminiModelDescription"></div>
+                <input type="password" id="geminiKey" placeholder="Enter Gemini API Key">
+            </div>
         </div>
-        <div id="status"></div>
+
+        <div class="section">
+            <h2>Settings</h2>
+            <label>
+                <input type="checkbox" id="fallbackEnabled" checked>
+                Enable fallback to dictionary API when model fails
+            </label>
+        </div>
+
+        <button id="saveButton">Save Settings</button>
+        <div id="status" class="status"></div>
     </div>
     <script src="options.js"></script>
 </body>

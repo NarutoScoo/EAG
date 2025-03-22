@@ -3,6 +3,10 @@ from flask_cors import CORS
 import requests
 import logging
 import json
+from google.generativeai import GenerativeModel  # for Gemini
+import openai  # for OpenAI
+import google.generativeai as genai
+from google.generativeai.types import HarmCategory, HarmBlockThreshold
 
 # Configure logging - only show INFO and above by default
 logging.basicConfig(
@@ -51,6 +55,36 @@ def query_ollama(prompt, model=None):
         logger.error(f"Error querying Ollama: {str(e)}")
         return None
 
+def query_gemini(prompt, model_name, api_key):
+    """Query Gemini model with appropriate configuration"""
+    try:
+        genai.configure(api_key=api_key)
+        
+        # Configure safety settings
+        safety_settings = {
+            HarmCategory.HARASSMENT: HarmBlockThreshold.MEDIUM_AND_ABOVE,
+            HarmCategory.HATE_SPEECH: HarmBlockThreshold.MEDIUM_AND_ABOVE,
+            HarmCategory.SEXUALLY_EXPLICIT: HarmBlockThreshold.MEDIUM_AND_ABOVE,
+            HarmCategory.DANGEROUS_CONTENT: HarmBlockThreshold.MEDIUM_AND_ABOVE,
+        }
+
+        # Initialize model with appropriate configuration
+        generation_config = {
+            'temperature': 0.7,
+            'top_p': 0.8,
+            'top_k': 40
+        }
+
+        model = genai.GenerativeModel(model_name=model_name,
+                                    safety_settings=safety_settings,
+                                    generation_config=generation_config)
+        
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        logger.error(f"Error with Gemini API: {str(e)}")
+        return None
+
 @app.route('/api/models', methods=['GET'])
 def list_models():
     """Endpoint to list available models"""
@@ -59,33 +93,45 @@ def list_models():
 
 @app.route('/api/meaning/<word>', methods=['GET'])
 def get_meaning(word):
+    provider = request.args.get('provider', 'ollama')
     model = request.args.get('model', None)
+    api_key = request.args.get('api_key', None)
     
     try:
-        # First attempt: Local Ollama
         prompt = f"""Define the word '{word}' and specify its part of speech. 
 Format the response in markdown with:
 - Word as heading
 - Part of speech in *italics*
 - Definition in a clear, concise manner
 - Example usage if relevant"""
+
+        response = None
         
-        llm_response = query_ollama(prompt, model)
+        if provider == 'ollama':
+            response = query_ollama(prompt, model)
+        elif provider == 'openai' and api_key:
+            openai.api_key = api_key
+            completion = openai.ChatCompletion.create(
+                model=model or "gpt-3.5-turbo",
+                messages=[{"role": "user", "content": prompt}]
+            )
+            response = completion.choices[0].message.content
+        elif provider == 'gemini' and api_key:
+            response = query_gemini(prompt, model or 'gemini-pro', api_key)
         
-        if llm_response and len(llm_response) > 10:
-            logger.info(f"LLM Definition for '{word}': {llm_response.strip()}")
-            formatted_response = {
+        if response and len(response) > 10:
+            logger.info(f"Definition from {provider} for '{word}': {response.strip()}")
+            return jsonify({
                 "word": word,
                 "meanings": [{
                     "partOfSpeech": "definition",
                     "definitions": [{
-                        "definition": llm_response.strip()
+                        "definition": response.strip()
                     }]
                 }]
-            }
-            return jsonify(formatted_response)
+            })
         
-        # Fallback: Dictionary API
+        # Fallback to Dictionary API
         logger.info(f"Falling back to Dictionary API for '{word}'")
         api_url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word}"
         response = requests.get(api_url)

@@ -1,42 +1,153 @@
+let ollamaModels = [];
+
+const GEMINI_MODEL_INFO = {
+    'gemini-2.0-flash': {
+        name: 'Gemini 2.0 Flash',
+        description: 'Next generation features with speed, realtime streaming, and multimodal support.'
+    },
+    'gemini-2.0-flash-lite': {
+        name: 'Gemini 2.0 Flash-Lite',
+        description: 'Optimized for cost efficiency and low latency.'
+    },
+    'gemini-2.0-pro-exp-02-05': {
+        name: 'Gemini 2.0 Pro Experimental',
+        description: 'Most powerful Gemini 2.0 model with advanced capabilities.'
+    },
+    'gemini-pro': {
+        name: 'Gemini Pro',
+        description: 'Legacy model with stable performance.'
+    }
+};
+
 async function saveOptions(e) {
     e.preventDefault();
-    const model = document.getElementById('modelSelect').value;
-    await browser.storage.sync.set({
-        selectedModel: model
-    });
+    const provider = document.getElementById('providerSelect').value;
     
-    showStatus('Options saved!', 'success');
+    let settings = {
+        provider: provider,
+        fallbackEnabled: document.getElementById('fallbackEnabled').checked,
+        modelSettings: {}
+    };
+
+    // Save provider-specific settings
+    switch (provider) {
+        case 'ollama':
+            settings.modelSettings = {
+                model: document.getElementById('ollamaModelSelect').value
+            };
+            break;
+        case 'openai':
+            settings.modelSettings = {
+                model: document.getElementById('openaiModelSelect').value,
+                apiKey: document.getElementById('openaiKey').value
+            };
+            break;
+        case 'gemini':
+            settings.modelSettings = {
+                model: document.getElementById('geminiModelSelect').value,
+                apiKey: document.getElementById('geminiKey').value
+            };
+            break;
+    }
+
+    try {
+        await browser.storage.sync.set(settings);
+        showStatus('Options saved!', 'success');
+    } catch (error) {
+        showStatus('Error saving options: ' + error.message, 'error');
+    }
 }
 
 async function restoreOptions() {
     try {
-        // Fetch available models
+        // Fetch available Ollama models
         const response = await fetch('http://127.0.0.1:8050/api/models');
-        if (!response.ok) {
-            throw new Error('Failed to fetch models');
+        if (response.ok) {
+            ollamaModels = (await response.json()).models;
+            populateOllamaModels();
+        } else {
+            showStatus('Warning: Local Ollama server not available', 'error');
         }
-        
-        const { models } = await response.json();
-        const select = document.getElementById('modelSelect');
-        
-        // Clear existing options
-        select.innerHTML = '';
-        
-        // Add models to select
-        models.forEach(model => {
-            const option = document.createElement('option');
-            option.value = model;
-            option.textContent = model;
-            select.appendChild(option);
+
+        // Restore saved settings
+        const settings = await browser.storage.sync.get({
+            provider: 'ollama',
+            fallbackEnabled: true,
+            modelSettings: {}
         });
-        
-        // Restore selected model
-        const { selectedModel } = await browser.storage.sync.get('selectedModel');
-        if (selectedModel && models.includes(selectedModel)) {
-            select.value = selectedModel;
+
+        document.getElementById('providerSelect').value = settings.provider;
+        document.getElementById('fallbackEnabled').checked = settings.fallbackEnabled;
+
+        // Restore provider-specific settings
+        if (settings.modelSettings) {
+            switch (settings.provider) {
+                case 'ollama':
+                    if (settings.modelSettings.model) {
+                        document.getElementById('ollamaModelSelect').value = settings.modelSettings.model;
+                    }
+                    break;
+                case 'openai':
+                    if (settings.modelSettings.model) {
+                        document.getElementById('openaiModelSelect').value = settings.modelSettings.model;
+                    }
+                    if (settings.modelSettings.apiKey) {
+                        document.getElementById('openaiKey').value = settings.modelSettings.apiKey;
+                    }
+                    break;
+                case 'gemini':
+                    if (settings.modelSettings.model) {
+                        document.getElementById('geminiModelSelect').value = settings.modelSettings.model;
+                    }
+                    if (settings.modelSettings.apiKey) {
+                        document.getElementById('geminiKey').value = settings.modelSettings.apiKey;
+                    }
+                    break;
+            }
         }
+
+        updateVisibility();
     } catch (error) {
-        showStatus('Error loading models. Make sure the backend server is running.', 'error');
+        showStatus('Error loading options: ' + error.message, 'error');
+    }
+}
+
+function populateOllamaModels() {
+    const select = document.getElementById('ollamaModelSelect');
+    select.innerHTML = '';
+    ollamaModels.forEach(model => {
+        const option = document.createElement('option');
+        option.value = model;
+        option.textContent = model;
+        select.appendChild(option);
+    });
+}
+
+function updateGeminiModelDescription() {
+    const selectedModel = document.getElementById('geminiModelSelect').value;
+    const descriptionElement = document.getElementById('geminiModelDescription');
+    if (GEMINI_MODEL_INFO[selectedModel]) {
+        descriptionElement.textContent = GEMINI_MODEL_INFO[selectedModel].description;
+    }
+}
+
+function updateVisibility() {
+    const provider = document.getElementById('providerSelect').value;
+    document.querySelectorAll('.provider-section').forEach(section => {
+        section.style.display = 'none';
+    });
+    
+    switch (provider) {
+        case 'ollama':
+            document.getElementById('ollamaSection').style.display = 'block';
+            break;
+        case 'openai':
+            document.getElementById('openaiSection').style.display = 'block';
+            break;
+        case 'gemini':
+            document.getElementById('geminiSection').style.display = 'block';
+            updateGeminiModelDescription();
+            break;
     }
 }
 
@@ -51,4 +162,8 @@ function showStatus(message, type) {
 }
 
 document.addEventListener('DOMContentLoaded', restoreOptions);
-document.getElementById('modelSelect').addEventListener('change', saveOptions); 
+document.getElementById('providerSelect').addEventListener('change', updateVisibility);
+document.getElementById('saveButton').addEventListener('click', saveOptions);
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('geminiModelSelect').addEventListener('change', updateGeminiModelDescription);
+}); 
